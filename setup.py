@@ -8,23 +8,23 @@ except IOError:
 
 
 setup(
-    name = 'segtok',
-    version = '1.0.0',
-    url = 'https://github.com/fnl/segtok',
-    author = 'Florian Leitner',
-    author_email = 'florian.leitner@gmail.com',
-    description = 'A sentence segmentation and word tokenization library.',
-    keywords = 'sentence segmenter splitter word tokenizer token',
-    license = 'MIT',
-    install_requires = ['regex'], # handles all Unicode categories in Regular Expressions
-    long_description = long_description,
-    entry_points = {
+    name='segtok',
+    version='1.0.0',
+    url='https://github.com/fnl/segtok',
+    author='Florian Leitner',
+    author_email='florian.leitner@gmail.com',
+    description='A sentence segmentation and word tokenization library.',
+    keywords='sentence segmenter splitter word tokenizer token',
+    license='MIT',
+    install_requires=['regex'],  # handles all Unicode categories in Regular Expressions
+    long_description=long_description,
+    entry_points={
         'console_scripts': [
             'tokenizer = segtok.tokenizer:main',
             'segmenter = segtok.segmenter:main',
         ],
     },
-    classifiers = [
+    classifiers=[
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
