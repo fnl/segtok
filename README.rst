@@ -20,7 +20,9 @@ The easiest way to get it installed is using ``pip`` or any other package manage
 
     pip install segtok
 
-Then try the command line tools on some plain-text files (e.g., this README) to see if segtok meets your needs.
+Then try the command line tools on some plain-text files (e.g., this README) to see if segtok meets your needs::
+
+    segmenter README.rst | tokenizer
 
 Usage
 =====
@@ -32,7 +34,7 @@ A command-line
 
 After installing the package, two command-line tools will be available, ``segmenter`` and ``tokenizer``.
 Each can take UTF-8 encoded plain-text and transforms it into newline-separated sentences or tokens, respectively.
-The latter assumes that each line contains (at most) one single sentence, as output by the former.
+The tokenizer assumes that each line contains (at most) one single sentence, which is the output format of the segmenter.
 To learn more about each tool, please invoke them with their help option (``-h`` or ``--help``).
 
 B ``segtok.segmenter``
