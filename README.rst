@@ -12,6 +12,16 @@ Both modules can also be used from the command-line.
 While other Indo-European languages could work, it has only been designed with languages such as Spanish, English, German, Italian, or French in mind.
 Extending the provided functionality to more foreign languages (e.g., CJK) might be even trickier.
 
+Install
+=======
+
+To install this package, you need to have the latest official version of Python installed.
+The easiest way to get it installed is using ``pip`` or any other package manager that works with PyPI::
+
+    pip install segtok
+
+Then try the command line tools on some plain-text files (e.g., this README) to see if segtok meets your needs.
+
 Usage
 =====
 
