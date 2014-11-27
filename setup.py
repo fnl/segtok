@@ -13,7 +13,7 @@ setup(
     url='https://github.com/fnl/segtok',
     author='Florian Leitner',
     author_email='florian.leitner@gmail.com',
-    description='A sentence segmentation and word tokenization library.',
+    description='sentence segmentation and word tokenization tools',
     keywords='sentence segmenter splitter word tokenizer token',
     license='MIT',
     install_requires=['regex'],  # handles all Unicode categories in Regular Expressions
