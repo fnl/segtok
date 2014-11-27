@@ -28,14 +28,14 @@ To learn more about each tool, please invoke them with their help option (``-h``
 B ``segtok.segmenter``
 ----------------------
 
-This package provides several ``split_...`` functions to segment texts into lists of sentences.
+This module provides several ``split_...`` functions to segment texts into lists of sentences.
 In addition, ``to_unix_linebreaks`` *normalizes* linebreaks (including the Unicode linebreak) to newline control characters (``\\n``).
 The function ``rewrite_line_separators`` can be used to move (rewrite) the newline separators in the input text so that they are placed at the sentence segmentation locations.
 
 C ``segtok.tokenizer``
 ----------------------
 
-This package provides several ``..._tokenizer`` functions to tokenize input sentences into words and symbols.
+This module provides several ``..._tokenizer`` functions to tokenize input sentences into words and symbols.
 In addition, it provides convenience functionality for English texts:
 Two compiled patterns (``IS_...``) can be used to detect if a word token contains a possessive-s marker ("Frank's") or is an apostrophe-based contraction ("didn't").
 Tokens that match these patterns can then be split using the ``split_possessive_marker`` and ``split_contraction`` functions, respectively.

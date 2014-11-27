@@ -1,7 +1,7 @@
 from setuptools import setup
 
 try:
-    with open('README') as file:
+    with open('README.rst') as file:
         long_description = file.read()
 except IOError:
     long_description = "missing"
