@@ -1,8 +1,77 @@
 # coding=utf-8
 from unittest import TestCase
-from otplc.tokenizer import space_tokenizer, symbol_tokenizer, word_tokenizer, web_tokenizer
+from segtok.tokenizer import space_tokenizer, symbol_tokenizer, word_tokenizer, web_tokenizer, IS_POSSESSIVE, \
+    split_possessive_marker, IS_CONTRACTION, split_contraction
 
 __author__ = 'Florian Leitner <florian.leitner@gmail.com>'
+
+
+class TestPossessiveMarker(TestCase):
+
+    def test_misses(self):
+        self.assertIsNone(IS_POSSESSIVE.match("Frank'd"))
+        self.assertIsNone(IS_POSSESSIVE.match("s'"))
+
+    def test_matches(self):
+        self.assertIsNotNone(IS_POSSESSIVE.match("Frank's"))
+        self.assertIsNotNone(IS_POSSESSIVE.match("Charles'"))
+
+    def test_unicode(self):
+        self.assertIsNotNone(IS_POSSESSIVE.match("Frank\u02BCs"))
+        self.assertIsNotNone(IS_POSSESSIVE.match("Charles\u2019"))
+        self.assertIsNotNone(IS_POSSESSIVE.match("home-less\u2032"))
+
+    def test_split_with_s(self):
+        stem, marker = split_possessive_marker("Frank's")
+        self.assertEqual(stem, "Frank")
+        self.assertEqual(marker, "'s")
+
+    def test_split_without_s(self):
+        stem, marker = split_possessive_marker("CHARLES'")
+        self.assertEqual(stem, "CHARLES")
+        self.assertEqual(marker, "'")
+
+    def test_split_unicode(self):
+        stem, marker = split_possessive_marker("\u2032s")
+        self.assertEqual(stem, '')
+        self.assertEqual(marker, "\u2032s")
+
+    def test_split_raises_error(self):
+        self.assertRaises(ValueError, split_possessive_marker, 'BAD')
+
+
+class TestContractions(TestCase):
+
+    def test_misses(self):
+        self.assertIsNone(IS_CONTRACTION.match("don'r"))
+        self.assertIsNone(IS_CONTRACTION.match("'ve"))
+
+    def test_matches(self):
+        self.assertIsNotNone(IS_CONTRACTION.match("I've"))
+        self.assertIsNotNone(IS_CONTRACTION.match("don't"))
+
+    def test_unicode(self):
+        self.assertIsNotNone(IS_CONTRACTION.match("Frank\u02BCs"))
+        self.assertIsNotNone(IS_POSSESSIVE.match("Charles\u2019"))
+        self.assertIsNotNone(IS_POSSESSIVE.match("home-less\u2032"))
+
+    def test_split_regular(self):
+        stem, contraction = split_contraction("we'll")
+        self.assertEqual(stem, 'we')
+        self.assertEqual(contraction, "'ll")
+
+    def test_split_not(self):
+        stem, contraction = split_contraction("don't")
+        self.assertEqual(stem, 'do')
+        self.assertEqual(contraction, "n't")
+
+    def test_split_unicode(self):
+        stem, contraction = split_contraction("\u2032c")
+        self.assertEqual(stem, '')
+        self.assertEqual(contraction, "\u2032c")
+
+    def test_split_raises_error(self):
+        self.assertRaises(ValueError, split_possessive_marker, 'BAD')
 
 
 class TestSpaceTokenizer(TestCase):
@@ -18,8 +87,9 @@ class TestSpaceTokenizer(TestCase):
         sentence = u"1\u00A02\u2007 3  \u2007  "
         self.assertSequenceEqual([u'1', u'2', u'3'], self.tokenizer(sentence))
 
+
 class TestSymbolTokenizer(TestCase):
-    
+
     def setUp(self):
         self.tokenizer = symbol_tokenizer
 
@@ -35,7 +105,7 @@ class TestSymbolTokenizer(TestCase):
         tokens = [u'\u0532A\u01CB', u'\u0632:\u2580%']
         self.assertSequenceEqual(tokens, self.tokenizer(sentence))
 
-    def test_hyphens(self):
+    def test_unicode_hyphens(self):
         sentence = u"123-ABC\u2011DEF\u2015XYZ"
         tokens = [u'123', u'-', u'ABC', u'\u2011', u'DEF', u'\u2015', u'XYZ']
         self.assertSequenceEqual(tokens, self.tokenizer(sentence))
@@ -124,14 +194,14 @@ class TestWordTokenizer(TestCase):
         tokens = [u'This', u'is', u'another', u'abbrev.', u'.']
         self.assertSequenceEqual(tokens, self.tokenizer(sentence))
 
-    def test_ellipsis(self):
+    def test_final_ellipsis(self):
         sentence = u"Please no more..."
         tokens = [u'Please', u'no', u'more', u'...']
         self.assertSequenceEqual(tokens, self.tokenizer(sentence))
 
     def test_abbreviated_ellipsis(self):
         sentence = u"abbrev... final...."
-        tokens = [u'abbrev', u'...', u'final', u'...', u'.']  # nice :-)
+        tokens = [u'abbrev', u'...', u'final', u'...', u'.']
         self.assertSequenceEqual(tokens, self.tokenizer(sentence))
 
     def test_double_dot(self):

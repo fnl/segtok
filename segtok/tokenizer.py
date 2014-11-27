@@ -1,55 +1,54 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
-Word tokenizing support.
+Regex-based word tokenizers.
 
-Note that small/full/half-width character variants are *not* included.
-If a text contains such characters, normalize it first.
+Note that small/full/half-width character variants are *not* covered.
+If a text were to contains such characters, normalize it first.
 """
-from HTMLParser import HTMLParser
+from html import unescape
 from regex import compile, UNICODE, VERBOSE
 
 try:
-    from otplc.segmenter import SENTENCE_TERMINALS
+    from segtok.segmenter import SENTENCE_TERMINALS, HYPHENS
 except ImportError:
     # if used as command-line tool
-    from segmenter import SENTENCE_TERMINALS
+    # noinspection PyUnresolvedReferences
+    from .segmenter import SENTENCE_TERMINALS, HYPHENS
 
 
 __author__ = 'Florian Leitner <florian.leitner@gmail.com>'
 
-unescape = HTMLParser().unescape
+APOSTROPHES = '\'\u02BC\u2019\u2032'
+"""All apostrophe-like marks, including the ASCII "single quote"."""
 
-# Note that Unicode the category Pd is NOT a good set for valid word-breaking hyphens,
-# because it contains many dashes that should not be considered part of a word token.
-HYPHEN = ur'[\u00AD\u058A\u05BE\u0F0C\u1400\u1806\u2010\u2011\u2e17\u30A0-]'
-"""Any valid word-breaking hyphen, including ASCII "hyphen minus"."""
-
-APOSTROPHE = ur"[\u02BC\u2019\u2032]"
+APOSTROPHE = r"[\u02BC\u2019\u2032]"
 """Any apostrophe-like marks, including "prime" but not the ASCII "single quote"."""
 
-LINEBREAK = ur'(?:\r\n|\n|\r|\u2028)'
+LINEBREAK = r'(?:\r\n|\n|\r|\u2028)'
 """Any valid linebreak sequence (Windows, Unix, Mac, or U+2028)."""
 
-LETTER = ur'[\p{Ll}\p{Lm}\p{Lt}\p{Lu}]'
+LETTER = r'[\p{Ll}\p{Lm}\p{Lt}\p{Lu}]'
 """Any Unicode letter character that can form part of a word: Ll, Lm, Lt, Lu."""
 
-NUMBER = ur'[\p{Nd}\p{Nl}]'
+NUMBER = r'[\p{Nd}\p{Nl}]'
 """Any Unicode number character: Nd or Nl."""
 
-DIMENSION = ur'\u207B?[\u00B9\u00B2\u00B3]'
+POWER = r'\u207B?[\u00B9\u00B2\u00B3]'
 """Superscript 1, 2, and 3, optionally prefixed with a minus sign."""
 
-ALNUM = ur'(?:%s|%s)' % (LETTER, NUMBER)
+ALNUM = LETTER[:-1] + NUMBER[1:]
 """Any alphanumeric Unicode character: letter or number."""
 
-SPACE = ur'[\p{Zs}\t]'
+HYPHEN = r'[%s]' % HYPHENS
+
+SPACE = r'[\p{Zs}\t]'
 """Any unicode space character plus the (horizontal) tab."""
 
 APO_MATCHER = compile(APOSTROPHE, UNICODE)
 """Matcher for any apostrophe."""
 
 HYPHENATED_LINEBREAK = compile(
-    ur'({alnum}{hyphen}){space}*?{linebreak}{space}*?({alnum})'.format(
+    r'({alnum}{hyphen}){space}*?{linebreak}{space}*?({alnum})'.format(
         alnum=ALNUM, hyphen=HYPHEN, linebreak=LINEBREAK, space=SPACE
     ), UNICODE
 )
@@ -59,6 +58,54 @@ a single line-break surrounded by optional (non-breaking) spaces,
 and terminates with a alphanumeric character on this next line.
 The opening char and hyphen as well as the terminating char are captured in two groups.
 """
+
+IS_POSSESSIVE = compile(r"{alnum}+(?:{hyphen}{alnum}+)*(?:{apo}[sS]|[sS]{apo})$".format(
+    alnum=ALNUM, hyphen=HYPHEN, apo="['" + APOSTROPHE[1:]
+), UNICODE
+)
+"""A pattern that matches English words with a possessive s terminal form."""
+
+IS_CONTRACTION = compile(r"{alnum}+(?:{hyphen}{alnum}+)*{apo}(?:d|ll|m|re|s|t|ve)$".format(
+    alnum=ALNUM, hyphen=HYPHEN, apo="['" + APOSTROPHE[1:]
+), UNICODE
+)
+"""A pattern that matches tokens with valid English contractions ``'(d|ll|m|re|s|t|ve)``."""
+
+
+def split_possessive_marker(token):
+    """
+    A function to split possessive markers at the end of alphanumeric (and hyphenated) tokens.
+
+    :param token: a token with a possessive marker (``IS_POSSESSIVE.search(token) != None``)
+    :return: a (stem, marker) pair
+    """
+    if len(token) > 1:
+        if token[-1].lower() == 's' and token[-2] in APOSTROPHES:
+            return token[:-2], token[-2:]
+        elif token[-2].lower() == 's' and token[-1] in APOSTROPHES:
+            return token[:-1], token[-1]
+
+    raise ValueError('token "%s" has no possessive marker' % token)
+
+
+def split_contraction(token):
+    """
+    A function to split apostrophe contractions at the end of alphanumeric (and hyphenated) tokens.
+
+    :param token: a token with an apostrophe (``IS_CONTRACTION.search(token) != None``)
+    :return: a (stem, contraction) pair, where the contraction always starts with the apostrophe
+    """
+    length = len(token)
+
+    if length > 1:
+        for pos in range(length - 1, -1, -1):
+            if token[pos] in APOSTROPHES:
+                if length > 2 and pos + 2 == length and token[-1] == 't' and token[pos - 1] == 'n':
+                    pos -= 1
+
+                return token[:pos], token[pos:]
+
+    raise ValueError('token "%s" has no apostrophe contraction' % token)
 
 
 def matches(regex):
@@ -72,35 +119,29 @@ def matches(regex):
     return match_decorator
 
 
-@matches(ur'\s+')
+@matches(r'\s+')
 def space_tokenizer(sentence):
     """
-    For a given input `sentence`, list its tokens.
+    For a given input `sentence`, return a list of its tokens.
 
     Split on Unicode spaces ``\\s+`` (i.e., any kind of **Unicode** space character).
-    Separating space characters are dropped.
-
-    :type sentence: unicode
-    :return: a unicode token list
+    The separating space characters are not included in the resulting token list.
     """
     return [token for token in space_tokenizer.split(sentence) if token]
 
 
-@matches(ur'(%s+)' % ALNUM)
+@matches(r'(%s+)' % ALNUM)
 def symbol_tokenizer(sentence):
     """
-    For a given input `sentence`, list its tokens.
+    The symbol tokenizer extends the :func:`space_tokenizer` by separating alphanumerics.
 
-    Extracts alphanumeric Unicode character sequences from already space-split tokens.
-
-    :type sentence: unicode
-    :return: a unicode token list
+    Separates alphanumeric Unicode character sequences in already space-split tokens.
     """
     return [token for span in space_tokenizer(sentence) for
             token in symbol_tokenizer.split(span) if token]
 
-#
-@matches(ur"""((?:
+
+@matches(r"""((?:
     # Dots, except ellipsis
     {alnum} \. (?!\.\.)
     | # Comma, surrounded by digits (e.g., chemicals) or letters
@@ -114,40 +155,35 @@ def symbol_tokenizer(sentence):
     | # ASCII single quote after an s and at the token's end
     s ' $
     | # Terminal dimensions (superscript minus, 1, 2, and 3) attached to physical units
-    #  size-prefix           unit-acronym    dim-s #
-    \b [yzafpn\u00B5mcdhkMGTPEZY]? {letter}{{1,3}} {dim} $
+    #  size-prefix                 unit-acronym    dimension
+    \b [yzafpn\u00B5mcdhkMGTPEZY]? {letter}{{1,3}} {power} $
     | # Any (Unicode) letter, digit, or the underscore
     {alnum}
-    )+)""".format(alnum=ALNUM, apo=APOSTROPHE, dim=DIMENSION,
+    )+)""".format(alnum=ALNUM, apo=APOSTROPHE, power=POWER,
                   hyphen=HYPHEN, letter=LETTER, number=NUMBER))
 def word_tokenizer(sentence):
     """
-    For a given input `sentence`, list its tokens.
+    This tokenizer extends the alphanumeric :func:`symbol_tokenizer` by splitting fewer cases:
 
-    This tokenizer extends the :func:`symbol_tokenizer` by splitting fewer cases:
-
-    * Dots appearing after a letter are maintained in the word, except for the last word in a
-      sentence if that dot is the sentence terminal. Therefore, abbreviation marks (words
-      containing or ending in a ``.``, like "i.e.") remain intact and URL or ID segments remain
-      complete ("www.ex-ample.com", "EC1.2.3.4.5", etc.). The only dots that never are attached
-      are triple dots (``...``; ellipsis).
-    * Commas surrounded by alphanumeric characters are maintained in the word, too, e.g. ``a,b``.
-      Commas, semi-colons, and colons "dangling" at the end of a token are always spliced off.
-    * Any two alphanumeric letters that are separated by a single hyphen are joined together;
-      Those "inner" hyphens may optionally be followed by a linebreak surrounded by spaces;
-      The spaces will be removed, however. For example, ``Hel- \\r\\n \t lo`` contains a (Windows)
-      linebreak and will be returned as ``Hel-lo``.
-    * Apostrophes are always allowed in words as long as they are not repeated; The single quote
-      ASCII letter ``'`` is only allowed as a terminal apostrophe after the letter ``s``,
-      otherwise it must be surrounded by letters. To support DNA and chemicals, a apostrophe
-      (prime) may be located before the hyphen, as in the single token "5'-ACGT-3'" (if any
-      non-ASCII hyphens are used instead of the shown single quote).
-    * Superscript 1, 2, and 3, optionally prefixed with a superscript minus, are attached to a
-      word if it is no longer than 3 letters (optionally 4 if the first letter is a power prefix
-      in the range from yocto, y (10^-24) to yotta, Y (10^+24)).
-
-    :type sentence: unicode
-    :return: a unicode token list
+    1. Dots appearing after a letter are maintained as part of the word, except for the last word
+       in a sentence if that dot is the sentence terminal. Therefore, abbreviation marks (words
+       containing or ending in a ``.``, like "i.e.") remain intact and URL or ID segments remain
+       complete ("www.ex-ample.com", "EC1.2.3.4.5", etc.). The only dots that never are attached
+       are triple dots (``...``; ellipsis).
+    2. Commas surrounded by alphanumeric characters are maintained in the word, too, e.g. ``a,b``.
+       Commas, semi-colons, and colons "dangling" at the end of a token are always spliced off.
+    3. Any two alphanumeric letters that are separated by a single hyphen are joined together;
+       Those "inner" hyphens may optionally be followed by a linebreak surrounded by spaces;
+       The spaces will be removed, however. For example, ``Hel- \\r\\n \t lo`` contains a (Windows)
+       linebreak and will be returned as ``Hel-lo``.
+    4. Apostrophes are always allowed in words as long as they are not repeated; The single quote
+       ASCII letter ``'`` is only allowed as a terminal apostrophe after the letter ``s``,
+       otherwise it must be surrounded by letters. To support DNA and chemicals, a apostrophe
+       (prime) may be located before the hyphen, as in the single token "5'-ACGT-3'" (if any
+       non-ASCII hyphens are used instead of the shown single quote).
+    5. Superscript 1, 2, and 3, optionally prefixed with a superscript minus, are attached to a
+       word if it is no longer than 3 letters (optionally 4 if the first letter is a power prefix
+       in the range from yocto, y (10^-24) to yotta, Y (10^+24)).
     """
     pruned = HYPHENATED_LINEBREAK.sub(r'\1\2', sentence)
     tokens = [token for span in space_tokenizer(pruned) for
@@ -189,7 +225,7 @@ def word_tokenizer(sentence):
     return tokens
 
 
-@matches(ur"""
+@matches(r"""
     (?<=^|[\s<"'(\[{])            # visual border
 
     (                             # RFC3986-like URIs:
@@ -212,58 +248,69 @@ def word_tokenizer(sentence):
     """)
 def web_tokenizer(sentence):
     """
-    For a given input `sentence`, list its tokens.
-
-    This tokenizer works like the :func:`word_tokenizer`, but does not split URIs or
+    The web tokenizer works like the :func:`word_tokenizer`, but does not split URIs or
     e-mail addresses. It also un-escapes all escape sequences (except in URIs or email addresses).
-
-    :type sentence: unicode
-    :return: a token generator
     """
     return [token for i, span in enumerate(web_tokenizer.split(sentence))
             for token in ((span,) if i % 2 else word_tokenizer(unescape(span)))]
 
 
-def _tokenize(sentence, tokenizer):
-    sep = None
-
-    for token in tokenizer(sentence):
-        if sep is not None:
-            stdout.write(sep)
-
-        stdout.write(token.encode('utf-8'))
-        sep = u' '.encode('utf-8')
-
-    stdout.write(linesep)
-
-
-if __name__ == '__main__':
+def main():
     # tokenize one sentence per line input
     from argparse import ArgumentParser
-    from sys import argv, stdout, stdin
+    from sys import argv, stdout, stdin, getdefaultencoding
     from os import path, linesep
 
+    def _tokenize(sentence, tokenizer):
+        sep = None
 
-    SPACE, SYMBOL, WORD, WEB = 0, 1, 2, 3
+        for token in tokenizer(sentence):
+            if sep is not None:
+                stdout.write(sep)
 
-    parser = ArgumentParser(usage=u'%(prog)s [--mode] [FILE ...]',
-                            description=__doc__, prog=path.basename(argv[0]))
+            stdout.write(token)
+            sep = ' '
+
+        stdout.write(linesep)
+
+    NUM_TOKENIZERS = 4
+    SPACE, ALNUM, TOKEN, WEB = list(range(NUM_TOKENIZERS))
+    TOKENIZER = [None] * NUM_TOKENIZERS
+    TOKENIZER[SPACE] = space_tokenizer
+    TOKENIZER[ALNUM] = symbol_tokenizer
+    TOKENIZER[TOKEN] = word_tokenizer
+    TOKENIZER[WEB] = web_tokenizer
+
+    parser = ArgumentParser(usage='%(prog)s [--mode] [FILE ...]',
+                            description=__doc__, prog=path.basename(argv[0]),
+                            epilog='default tokenizer: token; default encoding: ' +
+                                   getdefaultencoding())
     parser.add_argument('files', metavar='FILE', nargs='*',
-                        help=u'One-Sentence-Per-Line file; if absent, read from STDIN')
+                        help='One-Sentence-Per-Line file; if absent, read from STDIN')
+    parser.add_argument('--possessive-marker', '-p', action='store_true',  # TODO
+                        help='split off the possessive marker from alphanumeric tokens')
     mode = parser.add_mutually_exclusive_group()
-    parser.set_defaults(mode=WORD)
-    mode.add_argument('--space',  '-s', action='store_const', dest='mode', const=SPACE)
-    mode.add_argument('--alnum',  '-a', action='store_const', dest='mode', const=SYMBOL)
-    mode.add_argument('--token',  '-t', action='store_const', dest='mode', const=WORD)
-    mode.add_argument('--web',    '-w', action='store_const', dest='mode', const=WEB)
+    parser.set_defaults(mode=TOKEN)
+    mode.add_argument('--space', '-s', action='store_const', dest='mode', const=SPACE,
+                      help=space_tokenizer.__doc__)
+    mode.add_argument('--alnum', '-a', action='store_const', dest='mode', const=ALNUM,
+                      help=symbol_tokenizer.__doc__)
+    mode.add_argument('--token', '-t', action='store_const', dest='mode', const=TOKEN,
+                      help=word_tokenizer.__doc__)
+    mode.add_argument('--web', '-w', action='store_const', dest='mode', const=WEB,
+                      help=web_tokenizer.__doc__)
 
     args = parser.parse_args()
-    tokenizer = [space_tokenizer, symbol_tokenizer, word_tokenizer, web_tokenizer,][args.mode]
+    tokenizer = TOKENIZER[args.mode]
 
     if args.files:
         for txt_file_path in args.files:
-            for line in open(txt_file_path, 'rU'):
-                _tokenize(line.decode('UTF-8'), tokenizer)
+            for line in open(txt_file_path, encoding='utf-8'):
+                _tokenize(line, tokenizer)
     else:
         for line in stdin:
-            _tokenize(line.decode('UTF-8'), tokenizer)
+            _tokenize(line, tokenizer)
+
+
+if __name__ == '__main__':
+    main()

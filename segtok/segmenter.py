@@ -21,7 +21,7 @@ and to avoid single letters or digits as sentences ("A. This sentence...").
 
 Sentence splits will always be enforced at [consecutive] line separators.
 
-Important: Windows text files use ``\\r\\n`` as linebreaks and Mac files use ``\r``;
+Important: Windows text files use ``\\r\\n`` as linebreaks and Mac files use ``\\r``;
 Convert the text to Unix linebreaks if the case.
 """
 from regex import compile, DOTALL, UNICODE, VERBOSE
@@ -33,8 +33,10 @@ SENTENCE_TERMINALS = '.!?\u203C\u203D\u2047\u2047\u2049\u3002' \
                      '\uFE52\uFE57\uFF01\uFF0E\uFF1F\uFF61'
 "The list of valid Unicode sentence terminal characters."
 
+# Note that Unicode the category Pd is NOT a good set for valid word-breaking hyphens,
+# because it contains many dashes that should not be considered part of a word.
 HYPHENS = '\u00AD\u058A\u05BE\u0F0C\u1400\u1806\u2010\u2011\u2e17\u30A0-'
-"The list of valid Unicode hyphen characters with the ASCII dash at the end."
+"Any valid word-breaking hyphen, including ASCII hyphen minus."
 
 # Use upper-case for abbreviations that always are capitalized:
 # Lower-case abbreviations may occur capitalized or not.
@@ -329,15 +331,16 @@ def _isNotOpened(span: str, brackets='()'):
     return nesting > 0
 
 
-if __name__ == '__main__':
+def main():
     # print one sentence per line
     from argparse import ArgumentParser
-    from sys import argv, stdout, stdin
+    from sys import argv, stdout, stdin, getdefaultencoding
     from os import path
     SINGLE, MULTI = 0, 1
 
     parser = ArgumentParser(usage='%(prog)s [--mode] [FILE ...]',
-                            description=__doc__, prog=path.basename(argv[0]))
+                            description=__doc__, prog=path.basename(argv[0]),
+                            epilog='default encoding: ' + getdefaultencoding())
     parser.add_argument('files', metavar='FILE', nargs='*',
                         help='UTF-8 plain-text file(s); if absent, read from STDIN')
     parser.add_argument('--normal-breaks', '-n', action='store_true',
@@ -346,11 +349,11 @@ if __name__ == '__main__':
     parser.set_defaults(mode=SINGLE)
     mode.add_argument('--single', '-s', action='store_const', dest='mode', const=SINGLE,
                       help=split_single.__doc__)
-    mode.add_argument('--multi',  '-m', action='store_const', dest='mode', const=MULTI,
+    mode.add_argument('--multi', '-m', action='store_const', dest='mode', const=MULTI,
                       help=split_multi.__doc__)
 
     args = parser.parse_args()
-    pattern = [DO_NOT_CROSS_LINES, MAY_CROSS_ONE_LINE,][args.mode]
+    pattern = [DO_NOT_CROSS_LINES, MAY_CROSS_ONE_LINE, ][args.mode]
     normal = to_unix_linebreaks if args.normal_breaks else lambda t: t
 
     if not args.files and args.mode != SINGLE:
@@ -360,10 +363,13 @@ if __name__ == '__main__':
         for span in rewrite_line_separators(normal(text), pattern):
             stdout.write(span)
 
-
     if args.files:
         for txt_file_path in args.files:
             segment(open(txt_file_path, 'rt', encoding='UTF-8').read())
     else:
         for line in stdin:
             segment(line)
+
+
+if __name__ == '__main__':
+    main()

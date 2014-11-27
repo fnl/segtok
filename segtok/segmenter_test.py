@@ -49,6 +49,7 @@ Always last, clear closing example."""
 SENTENCES = OSPL.split('\n')
 TEXT = ' '.join(SENTENCES)
 
+
 class TestSentenceSegmenter(TestCase):
 
     def setUp(self):
@@ -63,8 +64,8 @@ class TestSentenceSegmenter(TestCase):
             self.assertTrue(ABBREVIATIONS.search(example) is not None, example)
 
     def test_ABBREVIATIONS_name_or_bracket(self):
-        for example in (#'by A',
-                        'Mister X', 'Xen, B', 'Xen and C', 'Xen, and C', 'this [G',
+        for example in (  # 'by A',
+            'Mister X', 'Xen, B', 'Xen and C', 'Xen, and C', 'this [G',
                         'that (Z'):
             self.assertTrue(ABBREVIATIONS.search(example) is not None, example)
 
@@ -136,7 +137,6 @@ class TestSentenceSegmenter(TestCase):
         sentences = ["The medial preoptic area (MPOA), and 2) did not decrease Fos-lir.",
                      "However, olfactory desensitizations did decrease Fos-lir."]
         self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
-
 
     def test_linebreak(self):
         text = "This is a\nmultiline sentence."

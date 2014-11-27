@@ -2,5 +2,7 @@
 /.idea/
 /bin/
 /build/
+/dist/
 /include/
 /lib/
+__pycache__
