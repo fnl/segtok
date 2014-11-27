@@ -39,3 +39,9 @@ This module provides several ``..._tokenizer`` functions to tokenize input sente
 In addition, it provides convenience functionality for English texts:
 Two compiled patterns (``IS_...``) can be used to detect if a word token contains a possessive-s marker ("Frank's") or is an apostrophe-based contraction ("didn't").
 Tokens that match these patterns can then be split using the ``split_possessive_marker`` and ``split_contraction`` functions, respectively.
+
+History
+=======
+
+- **1.1.0** added possessive-s marker and apostrophe contraction splitting of tokens
+- **1.0.0** initial release

@@ -72,40 +72,66 @@ IS_CONTRACTION = compile(r"{alnum}+(?:{hyphen}{alnum}+)*{apo}(?:d|ll|m|re|s|t|ve
 """A pattern that matches tokens with valid English contractions ``'(d|ll|m|re|s|t|ve)``."""
 
 
-def split_possessive_marker(token):
+def split_possessive_markers(tokens):
     """
     A function to split possessive markers at the end of alphanumeric (and hyphenated) tokens.
 
-    :param token: a token with a possessive marker (``IS_POSSESSIVE.search(token) != None``)
-    :return: a (stem, marker) pair
+    Takes the output of any of the tokenizer functions and produces and updated list.
+    To use it, simply wrap the tokenizer function, for example::
+
+    >>> my_sentence = "This is Fred's latest book."
+    >>> split_possessive_markers(word_tokenizer(my_sentence))
+    ['This', 'is', 'Fred', "'s", 'latest', 'book', '.']
+
+    :param tokens: a list of tokens
+    :returns: an updated list if a split was made or the original list otherwise
     """
-    if len(token) > 1:
-        if token[-1].lower() == 's' and token[-2] in APOSTROPHES:
-            return token[:-2], token[-2:]
-        elif token[-2].lower() == 's' and token[-1] in APOSTROPHES:
-            return token[:-1], token[-1]
+    idx = -1
 
-    raise ValueError('token "%s" has no possessive marker' % token)
+    for token in list(tokens):
+        idx += 1
+
+        if IS_POSSESSIVE.match(token) is not None:
+            if token[-1].lower() == 's' and token[-2] in APOSTROPHES:
+                tokens.insert(idx, token[:-2])
+                idx += 1
+                tokens[idx] = token[-2:]
+            elif token[-2].lower() == 's' and token[-1] in APOSTROPHES:
+                tokens.insert(idx, token[:-1])
+                idx += 1
+                tokens[idx] = token[-1:]
+
+    return tokens
 
 
-def split_contraction(token):
+def split_contractions(tokens):
     """
     A function to split apostrophe contractions at the end of alphanumeric (and hyphenated) tokens.
 
-    :param token: a token with an apostrophe (``IS_CONTRACTION.search(token) != None``)
-    :return: a (stem, contraction) pair, where the contraction always starts with the apostrophe
+    Takes the output of any of the tokenizer functions and produces and updated list.
+
+    :param tokens: a list of tokens
+    :returns: an updated list if a split was made or the original list otherwise
     """
-    length = len(token)
+    idx = -1
 
-    if length > 1:
-        for pos in range(length - 1, -1, -1):
-            if token[pos] in APOSTROPHES:
-                if length > 2 and pos + 2 == length and token[-1] == 't' and token[pos - 1] == 'n':
-                    pos -= 1
+    for token in list(tokens):
+        idx += 1
 
-                return token[:pos], token[pos:]
+        if IS_CONTRACTION.match(token) is not None:
+            length = len(token)
 
-    raise ValueError('token "%s" has no apostrophe contraction' % token)
+            if length > 1:
+                for pos in range(length - 1, -1, -1):
+                    if token[pos] in APOSTROPHES:
+                        if length > 2 and pos + 2 == length and token[-1] == 't' and token[pos - 1] == 'n':
+                            pos -= 1
+
+                        tokens.insert(idx, token[:pos])
+                        idx += 1
+                        tokens[idx] = token[pos:]
+
+    return tokens
 
 
 def matches(regex):
@@ -289,6 +315,8 @@ def main():
                         help='One-Sentence-Per-Line file; if absent, read from STDIN')
     parser.add_argument('--possessive-marker', '-p', action='store_true',  # TODO
                         help='split off the possessive marker from alphanumeric tokens')
+    parser.add_argument('--split-contractions', '-c', action='store_true',  # TODO
+                        help='split contractions like "don\'t" in alphanumeric tokens in two')
     mode = parser.add_mutually_exclusive_group()
     parser.set_defaults(mode=TOKEN)
     mode.add_argument('--space', '-s', action='store_const', dest='mode', const=SPACE,
@@ -301,7 +329,14 @@ def main():
                       help=web_tokenizer.__doc__)
 
     args = parser.parse_args()
-    tokenizer = TOKENIZER[args.mode]
+    tokenizer_func = TOKENIZER[args.mode]
+
+    if args.split_contractions:
+        tokenizer = lambda sentence: split_contractions(tokenizer_func(sentence))
+    elif args.possessive_marker:
+        tokenizer = lambda sentence: split_possessive_markers(tokenizer_func(sentence))
+    else:
+        tokenizer = tokenizer_func
 
     if args.files:
         for txt_file_path in args.files:

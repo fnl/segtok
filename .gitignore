@@ -5,4 +5,5 @@
 /dist/
 /include/
 /lib/
+/segtok.egg-info/
 __pycache__

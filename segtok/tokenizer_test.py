@@ -1,7 +1,7 @@
 # coding=utf-8
 from unittest import TestCase
 from segtok.tokenizer import space_tokenizer, symbol_tokenizer, word_tokenizer, web_tokenizer, IS_POSSESSIVE, \
-    split_possessive_marker, IS_CONTRACTION, split_contraction
+    split_possessive_markers, IS_CONTRACTION, split_contractions
 
 __author__ = 'Florian Leitner <florian.leitner@gmail.com>'
 
@@ -22,22 +22,22 @@ class TestPossessiveMarker(TestCase):
         self.assertIsNotNone(IS_POSSESSIVE.match("home-less\u2032"))
 
     def test_split_with_s(self):
-        stem, marker = split_possessive_marker("Frank's")
-        self.assertEqual(stem, "Frank")
-        self.assertEqual(marker, "'s")
+        result = split_possessive_markers(["Fred's", 'is', "Frank's", 'bar', '.'])
+        self.assertEqual(7, len(result), str(result))
+        self.assertEqual(result[0], "Fred", str(result))
+        self.assertEqual(result[1], "'s", str(result))
+        self.assertEqual(result[3], "Frank", str(result))
+        self.assertEqual(result[4], "'s", str(result))
 
     def test_split_without_s(self):
-        stem, marker = split_possessive_marker("CHARLES'")
+        stem, marker = split_possessive_markers(["CHARLES'"])
         self.assertEqual(stem, "CHARLES")
         self.assertEqual(marker, "'")
 
     def test_split_unicode(self):
-        stem, marker = split_possessive_marker("\u2032s")
-        self.assertEqual(stem, '')
+        stem, marker = split_possessive_markers(["a\u2032s"])
+        self.assertEqual(stem, 'a')
         self.assertEqual(marker, "\u2032s")
-
-    def test_split_raises_error(self):
-        self.assertRaises(ValueError, split_possessive_marker, 'BAD')
 
 
 class TestContractions(TestCase):
@@ -56,22 +56,22 @@ class TestContractions(TestCase):
         self.assertIsNotNone(IS_POSSESSIVE.match("home-less\u2032"))
 
     def test_split_regular(self):
-        stem, contraction = split_contraction("we'll")
-        self.assertEqual(stem, 'we')
-        self.assertEqual(contraction, "'ll")
+        result = split_contractions(["We'll", 'see', "her's", 'too', '!'])
+        self.assertEqual(7, len(result), str(result))
+        self.assertEqual(result[0], 'We', str(result))
+        self.assertEqual(result[1], "'ll", str(result))
+        self.assertEqual(result[3], 'her', str(result))
+        self.assertEqual(result[4], "'s", str(result))
 
     def test_split_not(self):
-        stem, contraction = split_contraction("don't")
+        stem, contraction = split_contractions(["don't"])
         self.assertEqual(stem, 'do')
         self.assertEqual(contraction, "n't")
 
     def test_split_unicode(self):
-        stem, contraction = split_contraction("\u2032c")
-        self.assertEqual(stem, '')
-        self.assertEqual(contraction, "\u2032c")
-
-    def test_split_raises_error(self):
-        self.assertRaises(ValueError, split_possessive_marker, 'BAD')
+        stem, contraction = split_contractions(["a\u2032d"])
+        self.assertEqual(stem, 'a')
+        self.assertEqual(contraction, "\u2032d")
 
 
 class TestSpaceTokenizer(TestCase):
