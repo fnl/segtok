@@ -55,7 +55,7 @@ Tokens that match these patterns can then be split using the ``split_possessive_
 Legal
 =====
 
-License: `MIT <http://opensource.org/licenses/MIT>`
+License: `MIT <http://opensource.org/licenses/MIT>`_
 
 Copyright (c) 2014, Florian Leitner. All rights reserved.
 
