@@ -62,5 +62,6 @@ Copyright (c) 2014, Florian Leitner. All rights reserved.
 History
 =======
 
+- **1.1.1** fixed PyPI setup (missing MANIFEST)
 - **1.1.0** added possessive-s marker and apostrophe contraction splitting of tokens
 - **1.0.0** initial release
