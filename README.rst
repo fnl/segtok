@@ -63,5 +63,6 @@ History
 =======
 
 - **1.1.2** fixed Unicode list of valid sentence terminals (was missing U+2048)
+- **1.1.1** fixed PyPI setup (missing MANIFEST.in for README.rst and "packages" in setup.py)
 - **1.1.0** added possessive-s marker and apostrophe contraction splitting of tokens
 - **1.0.0** initial release
