@@ -29,7 +29,7 @@ from regex import compile, DOTALL, UNICODE, VERBOSE
 
 __author__ = 'Florian Leitner <florian.leitner@gmail.com>'
 
-SENTENCE_TERMINALS = '.!?\u203C\u203D\u2047\u2047\u2049\u3002' \
+SENTENCE_TERMINALS = '.!?\u203C\u203D\u2047\u2048\u2049\u3002' \
                      '\uFE52\uFE57\uFF01\uFF0E\uFF1F\uFF61'
 "The list of valid Unicode sentence terminal characters."
 
@@ -98,12 +98,10 @@ CONTINUATIONS = compile(r""" ^ # at string start only
 "Lower-case two-letter words that in the given form usually don't start a sentence."
 
 BEFORE_LOWER = compile(r""" .*?
-(?: [%s]"[\)\]]*                  # ."]) .") ."
-|   [%s] [\)\]]+                  # .]) .)
-|   \b spp \.                     # spp.  (species pluralis)
-# |   \b \p{Ll}+ \. \p{Ll}+ \. [\)\]]*  # l.l. l.l.) l.ll.])
-|   \b \p{L} \p{Ll}? \.           # Ll. L.
-# |   \b \p{L} \.           # Ll. L.
+(?: [%s]"[\)\]]*           # ."]) .") ."
+|   [%s] [\)\]]+           # .]) .)
+|   \b spp \.              # spp.  (species pluralis)
+|   \b \p{L} \p{Ll}? \.    # Ll. L.
 ) \s+ $""" % (SENTENCE_TERMINALS, SENTENCE_TERMINALS), DOTALL | UNICODE | VERBOSE
 )
 """
