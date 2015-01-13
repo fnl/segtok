@@ -153,9 +153,7 @@ MAY_CROSS_ONE_LINE = _compile(2)
 
 def split_single(text, join_on_lowercase=False):
     """
-    Default: split `text` at sentences terminals and at newline chars.
-
-    Optionally, `join_on_lowercase`, as lower-case letters per se do not force sentence joining.
+    Default: split `text` at sentence terminals and at newline chars.
     """
     return _sentences(DO_NOT_CROSS_LINES.split(text), join_on_lowercase)
 
@@ -164,8 +162,6 @@ def split_multi(text, join_on_lowercase=False):
     """
     Sentences may contain non-consecutive (single) newline chars, while consecutive newline chars
     ("paragraph separators") always split sentences.
-
-    Optionally, `join_on_lowercase`, as lower-case letters per se do not force sentence joining.
     """
     return _sentences(MAY_CROSS_ONE_LINE.split(text), join_on_lowercase)
 
