@@ -258,6 +258,15 @@ class TestWordTokenizer(TestCase):
         tokens = [u'10', u'V', u'\u00B7', u'm\u207B\u00B9', u'msec\u00B2']
         self.assertSequenceEqual(tokens, self.tokenizer(sentence))
 
+    def test_chemical_formula(self):
+        sentence = u"O\u2082 H\u2081\u2082Si\u2085O\u2082 " \
+                   u"Al\u2082(SO\u2084)\u2083 [NO\u2084]\u207B Not\u2081"
+        tokens = [u"O\u2082", u"H\u2081\u2082Si\u2085O\u2082",
+                  u"Al\u2082", u"(", u"SO\u2084", u")\u2083",
+                  u"[", u"NO\u2084", u"]\u207B",
+                  u"Not", u'\u2081']
+        self.assertSequenceEqual(tokens, self.tokenizer(sentence))
+
     def test_URLs(self):
         sentence = u"http://www.example.com/path/to.file?kwd=1&arg"
         tokens = [u'http', u'://', u'www.example.com', u'/', u'path',

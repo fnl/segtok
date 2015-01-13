@@ -36,6 +36,9 @@ NUMBER = r'[\p{Nd}\p{Nl}]'
 POWER = r'\u207B?[\u00B9\u00B2\u00B3]'
 """Superscript 1, 2, and 3, optionally prefixed with a minus sign."""
 
+SUBDIGIT = r'[\u2080-\u2089]'
+"""Subscript digits."""
+
 ALNUM = LETTER[:-1] + NUMBER[1:]
 """Any alphanumeric Unicode character: letter or number."""
 
@@ -124,7 +127,7 @@ def split_contractions(tokens):
             if length > 1:
                 for pos in range(length - 1, -1, -1):
                     if token[pos] in APOSTROPHES:
-                        if length > 2 and pos + 2 == length and token[-1] == 't' and token[pos - 1] == 'n':
+                        if 2 < length and pos + 2 == length and token[-1] == 't' and token[pos - 1] == 'n':
                             pos -= 1
 
                         tokens.insert(idx, token[:pos])
@@ -183,9 +186,12 @@ def symbol_tokenizer(sentence):
     | # Terminal dimensions (superscript minus, 1, 2, and 3) attached to physical units
     #  size-prefix                 unit-acronym    dimension
     \b [yzafpn\u00B5mcdhkMGTPEZY]? {letter}{{1,3}} {power} $
+    | # Atom counts (subscript numbers) and ionization states (optional superscript
+    #   2 or 3 followed by a + or -) are attached to valid fragments of a chemical formula
+    \b (?:[A-Z][a-z]?|[\)\]])+ {subdigit}+ (?:[\u00B2\u00B3]?[\u207A\u207B])?
     | # Any (Unicode) letter, digit, or the underscore
     {alnum}
-    )+)""".format(alnum=ALNUM, apo=APOSTROPHE, power=POWER,
+    )+)""".format(alnum=ALNUM, apo=APOSTROPHE, power=POWER, subdigit=SUBDIGIT,
                   hyphen=HYPHEN, letter=LETTER, number=NUMBER))
 def word_tokenizer(sentence):
     """
@@ -210,6 +216,7 @@ def word_tokenizer(sentence):
     5. Superscript 1, 2, and 3, optionally prefixed with a superscript minus, are attached to a
        word if it is no longer than 3 letters (optionally 4 if the first letter is a power prefix
        in the range from yocto, y (10^-24) to yotta, Y (10^+24)).
+    6. Subscript digits if prefixed with letters that look like a chemical formula.
     """
     pruned = HYPHENATED_LINEBREAK.sub(r'\1\2', sentence)
     tokens = [token for span in space_tokenizer(pruned) for
