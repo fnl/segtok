@@ -9,8 +9,8 @@ The segtok package provides two modules, ``segtok.segmenter`` and ``segtok.token
 The segmenter provides functionality for splitting (Indo-European) text into sentences.
 The tokenizer provides functionality for splitting (Indo-European) sentences into words and symbols (collectively called *tokens*).
 Both modules can also be used from the command-line.
-While other Indo-European languages could work, it has only been designed with languages such as Spanish, English, German, Italian, or French in mind.
-Extending the provided functionality to more foreign languages (e.g., CJK) might be even trickier.
+While other Indo-European languages could work, it has only been designed with languages such as Spanish, English, and German in mind.
+For a more informed introduction to this tool, please read the article on my blog_.
 
 Install
 =======
@@ -62,7 +62,10 @@ Copyright (c) 2014, Florian Leitner. All rights reserved.
 History
 =======
 
+- **1.2.0** wrote blog_ "documentation" and added chemical formula sub/super-script functionality
 - **1.1.2** fixed Unicode list of valid sentence terminals (was missing U+2048)
 - **1.1.1** fixed PyPI setup (missing MANIFEST.in for README.rst and "packages" in setup.py)
 - **1.1.0** added possessive-s marker and apostrophe contraction splitting of tokens
 - **1.0.0** initial release
+
+.. _blog: http://fnl.es/segtok-a-segmentation-and-tokenization-library.html
