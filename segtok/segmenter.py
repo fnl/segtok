@@ -121,6 +121,9 @@ UPPER_CASE_END = compile(r'\b[\p{Lu}\p{Lt}]\p{L}*\.\s+$', UNICODE)
 UPPER_CASE_START = compile(r'^(?:(?:\(\d{4}\)\s)?[\p{Lu}\p{Lt}]\p{L}*|\d+)[\.,:]\s+', UNICODE)
 "Inside brackets, 'Words' that can be part of a large abbreviation, like a journal name."
 
+SHORT_SENTENCE_LENGTH = 55
+"Length of either sentence fragment inside brackets to assume the fragment is not its own sentence."
+# This can be increased/decreased to heighten/lower the likelihood of splits inside brackets.
 
 NON_UNIX_LINEBREAK = compile(r'(?:\r\n|\r|\u2028)', UNICODE)
 "All linebreak sequence variants except the Unix newline (only)."
@@ -151,19 +154,19 @@ MAY_CROSS_ONE_LINE = _compile(2)
 "A segmentation pattern where two or more newline chars also terminate sentences."
 
 
-def split_single(text, join_on_lowercase=False):
+def split_single(text, join_on_lowercase=False, short_sentence_length=SHORT_SENTENCE_LENGTH):
     """
     Default: split `text` at sentence terminals and at newline chars.
     """
-    return _sentences(DO_NOT_CROSS_LINES.split(text), join_on_lowercase)
+    return _sentences(DO_NOT_CROSS_LINES.split(text), join_on_lowercase, short_sentence_length)
 
 
-def split_multi(text, join_on_lowercase=False):
+def split_multi(text, join_on_lowercase=False, short_sentence_length=SHORT_SENTENCE_LENGTH):
     """
     Sentences may contain non-consecutive (single) newline chars, while consecutive newline chars
     ("paragraph separators") always split sentences.
     """
-    return _sentences(MAY_CROSS_ONE_LINE.split(text), join_on_lowercase)
+    return _sentences(MAY_CROSS_ONE_LINE.split(text), join_on_lowercase, short_sentence_length)
 
 
 def split_newline(text):
@@ -178,18 +181,21 @@ def split_newline(text):
             yield line
 
 
-def rewrite_line_separators(text, pattern, join_on_lowercase=False):
+def rewrite_line_separators(text, pattern, join_on_lowercase=False,
+                            short_sentence_length=SHORT_SENTENCE_LENGTH):
     """
     Remove line separator chars inside sentences and ensure there is a ``\\n`` at their end.
 
     :param text: input plain-text
     :param pattern: for the initial sentence splitting
     :param join_on_lowercase: always join sentences that start with lower-case
+    :param short_sentence_length: the upper boundary for text spans that are not split
+                                  into sentences inside brackets
     :return: a generator yielding the spans of text
     """
     offset = 0
 
-    for sentence in _sentences(pattern.split(text), join_on_lowercase):
+    for sentence in _sentences(pattern.split(text), join_on_lowercase, short_sentence_length):
         start = text.index(sentence, offset)
         intervening = text[offset:start]
 
@@ -210,22 +216,23 @@ def to_unix_linebreaks(text):
     return NON_UNIX_LINEBREAK.sub(text, '\n')
 
 
-def _sentences(spans, join_on_lowercase):
-    "Join spans to full sentences, optionally always joining on lower-case."
+def _sentences(spans, join_on_lowercase, short_sentence_length):
+    """Join spans back together into sentences as necessary."""
     last = None
+    shorterThanATypicalSentence = lambda c, l: c < short_sentence_length or l < short_sentence_length
 
     for current in _abbreviation_joiner(spans):
         if last is not None:
             if (join_on_lowercase or BEFORE_LOWER.match(last)) and LOWER_WORD.match(current):
                 last = '%s%s' % (last, current)
-            elif _isOpen(last) and (
-                _isNotOpened(current) or last.endswith(' et al. ') or (
+            elif shorterThanATypicalSentence(len(current), len(last)) and _is_open(last) and (
+                _is_not_opened(current) or last.endswith(' et al. ') or (
                     UPPER_CASE_END.search(last) and UPPER_CASE_START.match(current)
                 )
             ):
                 last = '%s%s' % (last, current)
-            elif _isOpen(last, '[]') and (
-                _isNotOpened(current, '[]') or last.endswith(' et al. ') or (
+            elif shorterThanATypicalSentence(len(current), len(last)) and _is_open(last, '[]') and (
+                _is_not_opened(current, '[]') or last.endswith(' et al. ') or (
                     UPPER_CASE_END.search(last) and UPPER_CASE_START.match(current)
                 )
             ):
@@ -243,7 +250,7 @@ def _sentences(spans, join_on_lowercase):
 
 
 def _abbreviation_joiner(spans):
-    "Generic segmentation function."
+    """Join spans that match the ABBREVIATIONS pattern."""
     segment = None
     makeSentence = lambda start, end: ''.join(spans[start:end])
     total = len(spans)
@@ -265,7 +272,8 @@ def _abbreviation_joiner(spans):
         yield makeSentence(segment, total)
 
 
-def _isOpen(span: str, brackets='()'):
+def _is_open(span: str, brackets='()'):
+    """Check if the span ends with an unclosed `bracket`."""
     offset = span.find(brackets[0])
     nesting = 0 if offset == -1 else 1
 
@@ -295,7 +303,8 @@ def _isOpen(span: str, brackets='()'):
     return nesting > 0
 
 
-def _isNotOpened(span: str, brackets='()'):
+def _is_not_opened(span: str, brackets='()'):
+    """Check if the span starts with an unopened `bracket`."""
     offset = span.rfind(brackets[1])
     nesting = 0 if offset == -1 else 1
 
@@ -330,7 +339,7 @@ def main():
     from argparse import ArgumentParser
     from sys import argv, stdout, stdin, getdefaultencoding
     from os import path
-    SINGLE, MULTI = 0, 1
+    single, multi = 0, 1
 
     parser = ArgumentParser(usage='%(prog)s [--mode] [FILE ...]',
                             description=__doc__, prog=path.basename(argv[0]),
@@ -339,22 +348,26 @@ def main():
                         help='UTF-8 plain-text file(s); if absent, read from STDIN')
     parser.add_argument('--normal-breaks', '-n', action='store_true',
                         help=to_unix_linebreaks.__doc__)
+    parser.add_argument('--bracket-spans', '-b', metavar="INT", type=int,
+                        default=SHORT_SENTENCE_LENGTH,
+                        help="upper boundary for text spans that are not split "
+                             "into sentences inside brackets [%(default)d]")
     mode = parser.add_mutually_exclusive_group()
-    parser.set_defaults(mode=SINGLE)
-    mode.add_argument('--single', '-s', action='store_const', dest='mode', const=SINGLE,
+    parser.set_defaults(mode=single)
+    mode.add_argument('--single', '-s', action='store_const', dest='mode', const=single,
                       help=split_single.__doc__)
-    mode.add_argument('--multi', '-m', action='store_const', dest='mode', const=MULTI,
+    mode.add_argument('--multi', '-m', action='store_const', dest='mode', const=multi,
                       help=split_multi.__doc__)
 
     args = parser.parse_args()
     pattern = [DO_NOT_CROSS_LINES, MAY_CROSS_ONE_LINE, ][args.mode]
     normal = to_unix_linebreaks if args.normal_breaks else lambda t: t
 
-    if not args.files and args.mode != SINGLE:
+    if not args.files and args.mode != single:
         parser.error('only single line splitting mode allowed when reading from STDIN')
 
     def segment(text):
-        for span in rewrite_line_separators(normal(text), pattern):
+        for span in rewrite_line_separators(normal(text), pattern, short_sentence_length=args.bracket_spans):
             stdout.write(span)
 
     if args.files:

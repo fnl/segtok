@@ -133,6 +133,13 @@ class TestSentenceSegmenter(TestCase):
                      "Uff, this is it!))", "In the Big City."]
         self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
 
+    def test_parenthesis_with_sentences(self):
+        sentences = ["The segmenter segments on single lines or to consecutive lines.",
+                     "(If you want to extract sentences that cross newlines, remove those line-breaks.",
+                     "Segtok assumes your content has some minimal semantical meaning.)",
+                     "It gracefully handles this and similar issues."]
+        self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
+
     def test_unclosed_brackets(self):
         sentences = ["The medial preoptic area (MPOA), and 2) did not decrease Fos-lir.",
                      "However, olfactory desensitizations did decrease Fos-lir."]
