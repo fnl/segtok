@@ -62,6 +62,7 @@ Copyright (c) 2014, Florian Leitner. All rights reserved.
 History
 =======
 
+- **dev** made segtok.tokenizer.match protected (renamed to "_match")
 - **1.2.1** the length of sentences inside brackets is now parametrized
 - **1.2.0** wrote blog_ "documentation" and added chemical formula sub/super-script functionality
 - **1.1.2** fixed Unicode list of valid sentence terminals (was missing U+2048)

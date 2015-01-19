@@ -137,7 +137,7 @@ def split_contractions(tokens):
     return tokens
 
 
-def matches(regex):
+def _matches(regex):
     """Regular expression compiling function decorator."""
     def match_decorator(fn):
         automaton = compile(regex, UNICODE | VERBOSE)
@@ -148,7 +148,7 @@ def matches(regex):
     return match_decorator
 
 
-@matches(r'\s+')
+@_matches(r'\s+')
 def space_tokenizer(sentence):
     """
     For a given input `sentence`, return a list of its tokens.
@@ -159,7 +159,7 @@ def space_tokenizer(sentence):
     return [token for token in space_tokenizer.split(sentence) if token]
 
 
-@matches(r'(%s+)' % ALNUM)
+@_matches(r'(%s+)' % ALNUM)
 def symbol_tokenizer(sentence):
     """
     The symbol tokenizer extends the :func:`space_tokenizer` by separating alphanumerics.
@@ -170,7 +170,7 @@ def symbol_tokenizer(sentence):
             token in symbol_tokenizer.split(span) if token]
 
 
-@matches(r"""((?:
+@_matches(r"""((?:
     # Dots, except ellipsis
     {alnum} \. (?!\.\.)
     | # Comma, surrounded by digits (e.g., chemicals) or letters
@@ -258,7 +258,7 @@ def word_tokenizer(sentence):
     return tokens
 
 
-@matches(r"""
+@_matches(r"""
     (?<=^|[\s<"'(\[{])            # visual border
 
     (                             # RFC3986-like URIs:
