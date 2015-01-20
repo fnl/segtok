@@ -1,7 +1,8 @@
 # coding=utf-8
 from unittest import TestCase
 from segtok.segmenter import split_single, split_multi, MAY_CROSS_ONE_LINE, \
-    split_newline, rewrite_line_separators, ABBREVIATIONS, NON_UNIX_LINEBREAK
+    split_newline, rewrite_line_separators, ABBREVIATIONS, NON_UNIX_LINEBREAK, \
+    to_unix_linebreaks
 
 
 OSPL = """One sentence per line.
@@ -49,6 +50,12 @@ Always last, clear closing example."""
 SENTENCES = OSPL.split('\n')
 TEXT = ' '.join(SENTENCES)
 
+
+class TestToUnixLinebreak(TestCase):
+
+    def test_function(self):
+        result = to_unix_linebreaks("This\r\none.")
+        self.assertEqual("This\none.", result)
 
 class TestSentenceSegmenter(TestCase):
 

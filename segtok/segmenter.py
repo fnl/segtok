@@ -213,7 +213,7 @@ def rewrite_line_separators(text, pattern, join_on_lowercase=False,
 
 def to_unix_linebreaks(text):
     """Replace non-Unix linebreak sequences (Windows, Mac, Unicode) with newlines (\\n)."""
-    return NON_UNIX_LINEBREAK.sub(text, '\n')
+    return NON_UNIX_LINEBREAK.sub('\n', text)
 
 
 def _sentences(spans, join_on_lowercase, short_sentence_length):
