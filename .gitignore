@@ -1,5 +1,6 @@
 /.Python
 /.idea/
+/.tox/
 /bin/
 /build/
 /dist/
@@ -7,3 +8,4 @@
 /lib/
 /segtok.egg-info/
 __pycache__
+*.pyc
