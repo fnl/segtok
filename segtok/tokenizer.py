@@ -5,8 +5,15 @@ Regex-based word tokenizers.
 Note that small/full/half-width character variants are *not* covered.
 If a text were to contains such characters, normalize it first.
 """
-from html import unescape
 from regex import compile, UNICODE, VERBOSE
+
+try:
+    from html import unescape
+except ImportError:
+    # Python <= 3.3 doesn't have html.unescape
+    from html.parser import HTMLParser
+    _parser = HTMLParser()
+    unescape = _parser.unescape
 
 try:
     from segtok.segmenter import SENTENCE_TERMINALS, HYPHENS
