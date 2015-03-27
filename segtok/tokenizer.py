@@ -1,19 +1,24 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Regex-based word tokenizers.
 
 Note that small/full/half-width character variants are *not* covered.
 If a text were to contains such characters, normalize it first.
 """
-from regex import compile, UNICODE, VERBOSE
-
+from __future__ import absolute_import, unicode_literals
+import codecs
 try:
     from html import unescape
 except ImportError:
     # Python <= 3.3 doesn't have html.unescape
-    from html.parser import HTMLParser
-    _parser = HTMLParser()
-    unescape = _parser.unescape
+    try:
+        from html.parser import HTMLParser
+    except ImportError:
+        # Python 2.x
+        from HTMLParser import HTMLParser
+    unescape = HTMLParser().unescape
+
+from regex import compile, UNICODE, VERBOSE
 
 try:
     from segtok.segmenter import SENTENCE_TERMINALS, HYPHENS
@@ -354,10 +359,13 @@ def main():
 
     if args.files:
         for txt_file_path in args.files:
-            for line in open(txt_file_path, encoding='utf-8'):
-                _tokenize(line, tokenizer)
+            with codecs.open(txt_file_path, 'rt', encoding='utf-8') as fp:
+                for line in fp:
+                    _tokenize(line, tokenizer)
     else:
         for line in stdin:
+            if isinstance(line, bytes):  # Python 2.x
+                line = line.decode('utf-8')
             _tokenize(line, tokenizer)
 
 

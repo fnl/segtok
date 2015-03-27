@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 A pattern-based sentence segmentation strategy; Known limitations:
 
@@ -24,6 +24,8 @@ Sentence splits will always be enforced at [consecutive] line separators.
 Important: Windows text files use ``\\r\\n`` as linebreaks and Mac files use ``\\r``;
 Convert the text to Unix linebreaks if the case.
 """
+from __future__ import absolute_import, unicode_literals
+import codecs
 from regex import compile, DOTALL, UNICODE, VERBOSE
 
 
@@ -272,14 +274,14 @@ def _abbreviation_joiner(spans):
         yield makeSentence(segment, total)
 
 
-def _is_open(span: str, brackets='()'):
+def _is_open(span_str, brackets='()'):
     """Check if the span ends with an unclosed `bracket`."""
-    offset = span.find(brackets[0])
+    offset = span_str.find(brackets[0])
     nesting = 0 if offset == -1 else 1
 
     while offset != -1:
-        opener = span.find(brackets[0], offset + 1)
-        closer = span.find(brackets[1], offset + 1)
+        opener = span_str.find(brackets[0], offset + 1)
+        closer = span_str.find(brackets[1], offset + 1)
 
         if opener == -1:
             if closer == -1:
@@ -303,14 +305,14 @@ def _is_open(span: str, brackets='()'):
     return nesting > 0
 
 
-def _is_not_opened(span: str, brackets='()'):
+def _is_not_opened(span_str, brackets='()'):
     """Check if the span starts with an unopened `bracket`."""
-    offset = span.rfind(brackets[1])
+    offset = span_str.rfind(brackets[1])
     nesting = 0 if offset == -1 else 1
 
     while offset != -1:
-        opener = span.rfind(brackets[0], 0, offset)
-        closer = span.rfind(brackets[1], 0, offset)
+        opener = span_str.rfind(brackets[0], 0, offset)
+        closer = span_str.rfind(brackets[1], 0, offset)
 
         if opener == -1:
             if closer == -1:
@@ -372,9 +374,12 @@ def main():
 
     if args.files:
         for txt_file_path in args.files:
-            segment(open(txt_file_path, 'rt', encoding='UTF-8').read())
+            with codecs.open(txt_file_path, 'rt', encoding='utf-8') as fp:
+                segment(fp.read())
     else:
         for line in stdin:
+            if isinstance(line, bytes):  # Python 2.x
+                line = line.decode('utf-8')
             segment(line)
 
 
