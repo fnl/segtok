@@ -7,8 +7,8 @@ segtok
 
 .. image:: https://img.shields.io/pypi/l/segtok.svg
 
-.. image:: https://img.shields.io/travis/kmike/segtok.svg?branch=py2
-    :target: https://travis-ci.org/kmike/segtok
+.. image:: https://img.shields.io/travis/fnl/segtok.svg?branch=master
+    :target: https://travis-ci.org/fnl/segtok
 
 -------------------------------------------
 Sentence segmentation and word tokenization
@@ -24,7 +24,8 @@ For a more informed introduction to this tool, please read the article on my blo
 Install
 =======
 
-To install this package, you need to have the latest official version of Python installed.
+To install this package, you should have the latest official version of Python 2 or 3 installed.
+The package has been reported to work with Python 2.7, 3.3, and 3.4 and is tested against the latest Python 2 and 3 branches.
 The easiest way to get it installed is using ``pip`` or any other package manager that works with PyPI::
 
     pip install segtok
@@ -43,6 +44,7 @@ A command-line
 
 After installing the package, two command-line tools will be available, ``segmenter`` and ``tokenizer``.
 Each can take UTF-8 encoded plain-text and transforms it into newline-separated sentences or tokens, respectively.
+You can use other encoding in Python3 simply by reconfiguring your environment encoding or in any version of Python by forcing a particular encoding with the ``--encoding`` parameters.
 The tokenizer assumes that each line contains (at most) one single sentence, which is the output format of the segmenter.
 To learn more about each tool, please invoke them with their help option (``-h`` or ``--help``).
 
@@ -68,9 +70,13 @@ License: `MIT <http://opensource.org/licenses/MIT>`_
 
 Copyright (c) 2014, Florian Leitner. All rights reserved.
 
+Contributors (kudos):
+- Mikhail Korbov (port to Python2.7 and Travis CI integration)
+
 History
 =======
 
+- **1.3.0** added Python2.7 support and Travis CI test integration (BIG thanks to Mikhail!)
 - **1.2.2** made segtok.tokenizer.match protected (renamed to "_match") and fixed UNIX linebreak normalization
 - **1.2.1** the length of sentences inside brackets is now parametrized
 - **1.2.0** wrote blog_ "documentation" and added chemical formula sub/super-script functionality
