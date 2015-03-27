@@ -1,11 +1,23 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Regex-based word tokenizers.
 
 Note that small/full/half-width character variants are *not* covered.
 If a text were to contains such characters, normalize it first.
 """
-from html import unescape
+from __future__ import absolute_import, unicode_literals
+import codecs
+try:
+    from html import unescape
+except ImportError:
+    # Python <= 3.3 doesn't have html.unescape
+    try:
+        from html.parser import HTMLParser
+    except ImportError:
+        # Python 2.x
+        from HTMLParser import HTMLParser
+    unescape = HTMLParser().unescape
+
 from regex import compile, UNICODE, VERBOSE
 
 try:
@@ -291,7 +303,7 @@ def web_tokenizer(sentence):
 def main():
     # tokenize one sentence per line input
     from argparse import ArgumentParser
-    from sys import argv, stdout, stdin, getdefaultencoding
+    from sys import argv, stdout, stdin, stderr, getdefaultencoding, version_info
     from os import path, linesep
 
     def _tokenize(sentence, tokenizer):
@@ -324,6 +336,7 @@ def main():
                         help='split off the possessive marker from alphanumeric tokens')
     parser.add_argument('--split-contractions', '-c', action='store_true',  # TODO
                         help='split contractions like "don\'t" in alphanumeric tokens in two')
+    parser.add_argument('--encoding', '-e', help='define encoding to use')
     mode = parser.add_mutually_exclusive_group()
     parser.set_defaults(mode=TOKEN)
     mode.add_argument('--space', '-s', action='store_const', dest='mode', const=SPACE,
@@ -338,6 +351,20 @@ def main():
     args = parser.parse_args()
     tokenizer_func = TOKENIZER[args.mode]
 
+    # fix broken Unicode handling in Python 2.x
+    # see http://www.macfreek.nl/memory/Encoding_of_Python_stdout
+    if args.encoding or version_info < (3, 0):
+        if version_info >= (3, 0):
+            stdout = stdout.buffer
+            stdin = stdin.buffer
+
+        stdout = codecs.getwriter(args.encoding or 'utf-8')(stdout, 'xmlcharrefreplace')
+        stdin = codecs.getreader(args.encoding or 'utf-8')(stdin, 'xmlcharrefreplace')
+
+        if not args.encoding:
+            stderr.write('wrapped tokenizer stdio with UTF-8 de/encoders')
+            stderr.write(linesep)
+
     if args.split_contractions:
         tokenizer = lambda sentence: split_contractions(tokenizer_func(sentence))
     elif args.possessive_marker:
@@ -347,8 +374,9 @@ def main():
 
     if args.files:
         for txt_file_path in args.files:
-            for line in open(txt_file_path, encoding='utf-8'):
-                _tokenize(line, tokenizer)
+            with codecs.open(txt_file_path, 'r', encoding=(args.encoding or 'utf-8')) as fp:
+                for line in fp:
+                    _tokenize(line, tokenizer)
     else:
         for line in stdin:
             _tokenize(line, tokenizer)

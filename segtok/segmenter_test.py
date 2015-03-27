@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import, division, unicode_literals
 from unittest import TestCase
 from segtok.segmenter import split_single, split_multi, MAY_CROSS_ONE_LINE, \
     split_newline, rewrite_line_separators, ABBREVIATIONS, NON_UNIX_LINEBREAK, \

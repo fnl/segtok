@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import, division, unicode_literals
 from unittest import TestCase
 from segtok.tokenizer import space_tokenizer, symbol_tokenizer, word_tokenizer, web_tokenizer, IS_POSSESSIVE, \
     split_possessive_markers, IS_CONTRACTION, split_contractions

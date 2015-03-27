@@ -1,6 +1,15 @@
 ======
 segtok
 ======
+
+.. image:: https://img.shields.io/pypi/v/segtok.svg
+    :target: https://pypi.python.org/pypi/segtok
+
+.. image:: https://img.shields.io/pypi/l/segtok.svg
+
+.. image:: https://img.shields.io/travis/kmike/segtok.svg?branch=py2
+    :target: https://travis-ci.org/kmike/segtok
+
 -------------------------------------------
 Sentence segmentation and word tokenization
 -------------------------------------------

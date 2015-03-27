@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 A pattern-based sentence segmentation strategy; Known limitations:
 
@@ -24,6 +24,8 @@ Sentence splits will always be enforced at [consecutive] line separators.
 Important: Windows text files use ``\\r\\n`` as linebreaks and Mac files use ``\\r``;
 Convert the text to Unix linebreaks if the case.
 """
+from __future__ import absolute_import, unicode_literals
+import codecs
 from regex import compile, DOTALL, UNICODE, VERBOSE
 
 
@@ -272,14 +274,14 @@ def _abbreviation_joiner(spans):
         yield makeSentence(segment, total)
 
 
-def _is_open(span: str, brackets='()'):
+def _is_open(span_str, brackets='()'):
     """Check if the span ends with an unclosed `bracket`."""
-    offset = span.find(brackets[0])
+    offset = span_str.find(brackets[0])
     nesting = 0 if offset == -1 else 1
 
     while offset != -1:
-        opener = span.find(brackets[0], offset + 1)
-        closer = span.find(brackets[1], offset + 1)
+        opener = span_str.find(brackets[0], offset + 1)
+        closer = span_str.find(brackets[1], offset + 1)
 
         if opener == -1:
             if closer == -1:
@@ -303,14 +305,14 @@ def _is_open(span: str, brackets='()'):
     return nesting > 0
 
 
-def _is_not_opened(span: str, brackets='()'):
+def _is_not_opened(span_str, brackets='()'):
     """Check if the span starts with an unopened `bracket`."""
-    offset = span.rfind(brackets[1])
+    offset = span_str.rfind(brackets[1])
     nesting = 0 if offset == -1 else 1
 
     while offset != -1:
-        opener = span.rfind(brackets[0], 0, offset)
-        closer = span.rfind(brackets[1], 0, offset)
+        opener = span_str.rfind(brackets[0], 0, offset)
+        closer = span_str.rfind(brackets[1], 0, offset)
 
         if opener == -1:
             if closer == -1:
@@ -337,8 +339,9 @@ def _is_not_opened(span: str, brackets='()'):
 def main():
     # print one sentence per line
     from argparse import ArgumentParser
-    from sys import argv, stdout, stdin, getdefaultencoding
-    from os import path
+    from sys import argv, stdout, stdin, stderr, getdefaultencoding, version_info
+    from os import path, linesep
+
     single, multi = 0, 1
 
     parser = ArgumentParser(usage='%(prog)s [--mode] [FILE ...]',
@@ -352,6 +355,7 @@ def main():
                         default=SHORT_SENTENCE_LENGTH,
                         help="upper boundary for text spans that are not split "
                              "into sentences inside brackets [%(default)d]")
+    parser.add_argument('--encoding', '-e', help='force another encoding to use')
     mode = parser.add_mutually_exclusive_group()
     parser.set_defaults(mode=single)
     mode.add_argument('--single', '-s', action='store_const', dest='mode', const=single,
@@ -363,6 +367,20 @@ def main():
     pattern = [DO_NOT_CROSS_LINES, MAY_CROSS_ONE_LINE, ][args.mode]
     normal = to_unix_linebreaks if args.normal_breaks else lambda t: t
 
+    # fix broken Unicode handling in Python 2.x
+    # see http://www.macfreek.nl/memory/Encoding_of_Python_stdout
+    if args.encoding or version_info < (3, 0):
+        if version_info >= (3, 0):
+            stdout = stdout.buffer
+            stdin = stdin.buffer
+
+        stdout = codecs.getwriter(args.encoding or 'utf-8')(stdout, 'xmlcharrefreplace')
+        stdin = codecs.getreader(args.encoding or 'utf-8')(stdin, 'xmlcharrefreplace')
+
+        if not args.encoding:
+            stderr.write('wrapped segmenter stdio with UTF-8 de/encoders')
+            stderr.write(linesep)
+
     if not args.files and args.mode != single:
         parser.error('only single line splitting mode allowed when reading from STDIN')
 
@@ -372,7 +390,8 @@ def main():
 
     if args.files:
         for txt_file_path in args.files:
-            segment(open(txt_file_path, 'rt', encoding='UTF-8').read())
+            with codecs.open(txt_file_path, 'r', encoding=(args.encoding or 'utf-8')) as fp:
+                segment(fp.read())
     else:
         for line in stdin:
             segment(line)
