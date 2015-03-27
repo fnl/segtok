@@ -72,7 +72,7 @@ Copyright (c) 2014, Florian Leitner. All rights reserved.
 
 Contributors (kudos):
 
-- Mikhail Korbov (port to Python2.7 and Travis CI integration)
+- Mikhail Korbov (@kmike; port to Python2.7 and Travis CI integration)
 
 History
 =======
