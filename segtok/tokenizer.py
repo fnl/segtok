@@ -303,7 +303,7 @@ def web_tokenizer(sentence):
 def main():
     # tokenize one sentence per line input
     from argparse import ArgumentParser
-    from sys import argv, stdout, stdin, getdefaultencoding
+    from sys import argv, stdout, stdin, stderr, getdefaultencoding, version_info
     from os import path, linesep
 
     def _tokenize(sentence, tokenizer):
@@ -336,6 +336,7 @@ def main():
                         help='split off the possessive marker from alphanumeric tokens')
     parser.add_argument('--split-contractions', '-c', action='store_true',  # TODO
                         help='split contractions like "don\'t" in alphanumeric tokens in two')
+    parser.add_argument('--encoding', '-e', help='define encoding to use')
     mode = parser.add_mutually_exclusive_group()
     parser.set_defaults(mode=TOKEN)
     mode.add_argument('--space', '-s', action='store_const', dest='mode', const=SPACE,
@@ -350,6 +351,20 @@ def main():
     args = parser.parse_args()
     tokenizer_func = TOKENIZER[args.mode]
 
+    # fix broken Unicode handling in Python 2.x
+    # see http://www.macfreek.nl/memory/Encoding_of_Python_stdout
+    if args.encoding or version_info < (3, 0):
+        if version_info >= (3, 0):
+            stdout = stdout.buffer
+            stdin = stdin.buffer
+
+        stdout = codecs.getwriter(args.encoding or 'utf-8')(stdout, 'xmlcharrefreplace')
+        stdin = codecs.getreader(args.encoding or 'utf-8')(stdin, 'xmlcharrefreplace')
+
+        if not args.encoding:
+            stderr.write('wrapped tokenizer stdio with UTF-8 de/encoders')
+            stderr.write(linesep)
+
     if args.split_contractions:
         tokenizer = lambda sentence: split_contractions(tokenizer_func(sentence))
     elif args.possessive_marker:
@@ -359,13 +374,11 @@ def main():
 
     if args.files:
         for txt_file_path in args.files:
-            with codecs.open(txt_file_path, 'rt', encoding='utf-8') as fp:
+            with codecs.open(txt_file_path, 'r', encoding=(args.encoding or 'utf-8')) as fp:
                 for line in fp:
                     _tokenize(line, tokenizer)
     else:
         for line in stdin:
-            if isinstance(line, bytes):  # Python 2.x
-                line = line.decode('utf-8')
             _tokenize(line, tokenizer)
 
 

@@ -339,8 +339,9 @@ def _is_not_opened(span_str, brackets='()'):
 def main():
     # print one sentence per line
     from argparse import ArgumentParser
-    from sys import argv, stdout, stdin, getdefaultencoding
-    from os import path
+    from sys import argv, stdout, stdin, stderr, getdefaultencoding, version_info
+    from os import path, linesep
+
     single, multi = 0, 1
 
     parser = ArgumentParser(usage='%(prog)s [--mode] [FILE ...]',
@@ -354,6 +355,7 @@ def main():
                         default=SHORT_SENTENCE_LENGTH,
                         help="upper boundary for text spans that are not split "
                              "into sentences inside brackets [%(default)d]")
+    parser.add_argument('--encoding', '-e', help='force another encoding to use')
     mode = parser.add_mutually_exclusive_group()
     parser.set_defaults(mode=single)
     mode.add_argument('--single', '-s', action='store_const', dest='mode', const=single,
@@ -365,6 +367,20 @@ def main():
     pattern = [DO_NOT_CROSS_LINES, MAY_CROSS_ONE_LINE, ][args.mode]
     normal = to_unix_linebreaks if args.normal_breaks else lambda t: t
 
+    # fix broken Unicode handling in Python 2.x
+    # see http://www.macfreek.nl/memory/Encoding_of_Python_stdout
+    if args.encoding or version_info < (3, 0):
+        if version_info >= (3, 0):
+            stdout = stdout.buffer
+            stdin = stdin.buffer
+
+        stdout = codecs.getwriter(args.encoding or 'utf-8')(stdout, 'xmlcharrefreplace')
+        stdin = codecs.getreader(args.encoding or 'utf-8')(stdin, 'xmlcharrefreplace')
+
+        if not args.encoding:
+            stderr.write('wrapped segmenter stdio with UTF-8 de/encoders')
+            stderr.write(linesep)
+
     if not args.files and args.mode != single:
         parser.error('only single line splitting mode allowed when reading from STDIN')
 
@@ -374,12 +390,10 @@ def main():
 
     if args.files:
         for txt_file_path in args.files:
-            with codecs.open(txt_file_path, 'rt', encoding='utf-8') as fp:
+            with codecs.open(txt_file_path, 'r', encoding=(args.encoding or 'utf-8')) as fp:
                 segment(fp.read())
     else:
         for line in stdin:
-            if isinstance(line, bytes):  # Python 2.x
-                line = line.decode('utf-8')
             segment(line)
 
 
