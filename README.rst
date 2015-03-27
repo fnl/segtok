@@ -71,6 +71,7 @@ License: `MIT <http://opensource.org/licenses/MIT>`_
 Copyright (c) 2014, Florian Leitner. All rights reserved.
 
 Contributors (kudos):
+
 - Mikhail Korbov (port to Python2.7 and Travis CI integration)
 
 History
