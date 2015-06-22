@@ -7,7 +7,7 @@ segtok
 
 .. image:: https://img.shields.io/pypi/l/segtok.svg
 
-.. image:: https://img.shields.io/travis/fnl/segtok.svg?branch=master
+.. image:: https://travis-ci.org/fnl/segtok.svg?branch=master
     :target: https://travis-ci.org/fnl/segtok
 
 -------------------------------------------
