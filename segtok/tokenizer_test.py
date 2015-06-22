@@ -149,6 +149,16 @@ class TestWordTokenizer(TestCase):
     def test_comma_dangling(self):
         self.assert_dangling(u',')
 
+    def test_comma_dangling_twice(self):
+        sentence = u'token (, hi), issue'
+        tokens = [u'token', '(', ',', 'hi', ')', ',', 'issue']
+        self.assertSequenceEqual(tokens, self.tokenizer(sentence))
+
+    def test_comma_dangling_double(self):
+        sentence = u'token (,; hi), issue'
+        tokens = [u'token', '(', ',', ';', 'hi', ')', ',', 'issue']
+        self.assertSequenceEqual(tokens, self.tokenizer(sentence))
+
     def assert_terminal(self, sep):
         sentence = u"A%s" % sep
         tokens = [u'A', sep]

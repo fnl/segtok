@@ -259,13 +259,17 @@ def word_tokenizer(sentence):
     dirty = True
     while dirty:
         dirty = False
-        count = len(tokens)
 
         for idx, word in enumerate(reversed(tokens), 1):
-            if len(word) > 1 and word[-1] in u',;:':
-                tokens[-idx] = word[:-1]
-                tokens.insert(count - idx + 1, word[-1])
+            while len(word) > 1 and word[-1] in u',;:':
+                char = word[-1]  # the dangling comma/colon
+                word = word[:-1]
+                tokens[-idx] = word
+                tokens.insert(len(tokens) - idx + 1, char)
+                idx += 1
                 dirty = True
+            if dirty:
+                break  # restart check to avoid index errors
 
     return tokens
 
