@@ -10,7 +10,7 @@ except IOError:
 
 setup(
     name='segtok',
-    version='1.3.0.0',
+    version='1.3.1',
     url='https://github.com/fnl/segtok',
     author='Florian Leitner',
     author_email='florian.leitner@gmail.com',
