@@ -77,6 +77,7 @@ Contributors (kudos):
 History
 =======
 
+- **1.4.0** the `word_tokenizer` no longer splits on colons between digits (time, references, ...)
 - **1.3.1** fixed multiple dangling commas and colons (reported by Jim Geovedi)
 - **1.3.0** added Python2.7 support and Travis CI test integration (BIG thanks to Mikhail!)
 - **1.2.2** made segtok.tokenizer.match protected (renamed to "_match") and fixed UNIX linebreak normalization

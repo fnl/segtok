@@ -138,6 +138,17 @@ class TestWordTokenizer(TestCase):
     def test_comma_inner(self):
         self.assert_inner(u',')
 
+    def test_dot_inner(self):
+        self.assert_inner(u'.')
+
+    def test_colon_inner(self):
+        sentence = u"12:6 12:50"
+        tokens = [u'12:6', u'12:50']
+        self.assertSequenceEqual(tokens, self.tokenizer(sentence))
+        sentence = u"abc:def 12:34:abc abc:12:34"
+        tokens = [u'abc', u':', u'def', u'12:34', u':', u'abc', u'abc', u':', u'12:34']
+        self.assertSequenceEqual(tokens, self.tokenizer(sentence))
+
     def assert_dangling(self, sep):
         sentence = u"that %sbut not%s this" % (sep, sep)
         tokens = [u'that', sep, u'but', u'not', sep, u'this']
@@ -148,6 +159,12 @@ class TestWordTokenizer(TestCase):
 
     def test_comma_dangling(self):
         self.assert_dangling(u',')
+
+    def test_colon_dangling(self):
+        self.assert_dangling(u':')
+
+    def test_semicolon_dangling(self):
+        self.assert_dangling(u';')
 
     def test_comma_dangling_twice(self):
         sentence = u'token (, hi), issue'
@@ -169,6 +186,12 @@ class TestWordTokenizer(TestCase):
 
     def test_comma_terminal(self):
         self.assert_terminal(u',')
+
+    def test_colon_terminal(self):
+        self.assert_terminal(u':')
+
+    def test_semicolon_terminal(self):
+        self.assert_terminal(u';')
 
     def test_hyphen_repeat(self):
         sentence = u"A--B"

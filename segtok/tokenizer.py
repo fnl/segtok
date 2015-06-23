@@ -187,6 +187,8 @@ def symbol_tokenizer(sentence):
     {alnum} \. (?!\.\.)
     | # Comma, surrounded by digits (e.g., chemicals) or letters
     {alnum} , (?={alnum})
+    | # Colon, surrounded by digits (e.g., time, references)
+    {number} : (?={number})
     | # Hyphen, surrounded by digits (e.g., DNA endings: "5'-ACGT-3'") or letters
     {alnum} {apo}? {hyphen} (?={alnum})  # incl. optional apostrophe for DNA segments
     | # Apostophes, non-consecutive
@@ -215,7 +217,8 @@ def word_tokenizer(sentence):
        complete ("www.ex-ample.com", "EC1.2.3.4.5", etc.). The only dots that never are attached
        are triple dots (``...``; ellipsis).
     2. Commas surrounded by alphanumeric characters are maintained in the word, too, e.g. ``a,b``.
-       Commas, semi-colons, and colons "dangling" at the end of a token are always spliced off.
+       Colons surrounded by digits are maintained, e.g., 'at 12:30pm' or 'Isaiah 12:3'.
+       Commas, semi-colons, and colons dangling at the end of a token are always spliced off.
     3. Any two alphanumeric letters that are separated by a single hyphen are joined together;
        Those "inner" hyphens may optionally be followed by a linebreak surrounded by spaces;
        The spaces will be removed, however. For example, ``Hel- \\r\\n \t lo`` contains a (Windows)
@@ -228,7 +231,7 @@ def word_tokenizer(sentence):
     5. Superscript 1, 2, and 3, optionally prefixed with a superscript minus, are attached to a
        word if it is no longer than 3 letters (optionally 4 if the first letter is a power prefix
        in the range from yocto, y (10^-24) to yotta, Y (10^+24)).
-    6. Subscript digits if prefixed with letters that look like a chemical formula.
+    6. Subscript digits are attached if prefixed with letters that look like a chemical formula.
     """
     pruned = HYPHENATED_LINEBREAK.sub(r'\1\2', sentence)
     tokens = [token for span in space_tokenizer(pruned) for
