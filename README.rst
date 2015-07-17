@@ -30,9 +30,12 @@ The easiest way to get it installed is using ``pip`` or any other package manage
 
     pip install segtok
 
+*Important*: If you are on a Linux machine and have problems installing the ``regex`` dependency of ``segtok``, make sure you have the ``python-dev`` and/or ``python3-dev`` packages installed to get the necessary headers to compile the package.
+
 Then try the command line tools on some plain-text files (e.g., this README) to see if segtok meets your needs::
 
     segmenter README.rst | tokenizer
+
 
 Usage
 =====
