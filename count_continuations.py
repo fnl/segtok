@@ -46,6 +46,8 @@ parser.add_argument('--verbose', '-v', action='count', default=0,
                     help='increase log level [WARN]')
 parser.add_argument('--quiet', '-q', action='count', default=0,
                     help='decrease log level [WARN]')
+parser.add_argument('--abbreviations', action='store_true',
+                    help='only count abbreviation-to-sentence-start usage')
 args = parser.parse_args()
 
 # logging setup
@@ -60,22 +62,48 @@ def sentence_start_pattern(continuation):
     upper_cont = '{}{}'.format(continuation[0].upper(), continuation[1:])
     return re.compile(r'(?:^|>|\t|\.\s)\s*{}\b'.format(upper_cont))
 
+def abbreviation_pattern(continuation):
+    return re.compile(r'\.\s+{}\b'.format(continuation))
+
 inside_sentence = {}
 sentence_start = {}
+after_abbreviation = {}
 
 for c in args.continuations:
     inside_sentence[c] = [re.compile(r'\b{}\b'.format(c)), 0]
     sentence_start[c] = [sentence_start_pattern(c), 0]
+    after_abbreviation[c] = [abbreviation_pattern(c), 0]
+
+cases = (sentence_start, after_abbreviation) if args.abbreviations else \
+    (inside_sentence, sentence_start, after_abbreviation)
 
 for line in sys.stdin:
     for continuation in inside_sentence:
-        for coll in (inside_sentence, sentence_start):
+        for coll in cases:
             pat_count = coll[continuation]
             pat_count[1] += len(pat_count[0].findall(line))
+
+if not args.abbreviations:
+    print("Freq.SS | Likelih. | N.abbrev. | N.starters | N.inside | Word")
+else:
+    print("Likelih. | N.abbrev. | N.starters | Word")
 
 for continuation in inside_sentence:
     starter_count = sentence_start[continuation][1]
     inside_count = inside_sentence[continuation][1]
+    abbrev_count = after_abbreviation[continuation][1]
     total = starter_count + inside_count
+    after_dot = starter_count + abbrev_count
     fraction = (starter_count / float(total)) if total > 0 else 0.0
-    print('%.3f' % fraction, "|", total, "|", continuation)
+    likelihood = (abbrev_count / after_dot) if after_dot > 0 else 0.0
+
+    if not args.abbreviations:
+        print('%.3f' % fraction, end=' | ')
+
+    print('%.3f' % likelihood, abbrev_count, starter_count,
+          sep=' | ', end=' | ')
+
+    if not args.abbreviations:
+        print(inside_count, end=' | ')
+
+    print(continuation)
