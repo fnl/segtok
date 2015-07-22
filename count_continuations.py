@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Count the relative freqeuncy of continuations in a corpus (STDIN)."""
+"""Count the relative frequency of continuations in a corpus (from STDIN)."""
 # The MIT License (MIT)
 #
 # Copyright (c) 2014 Florian Leitner <florian.leitner@gmail.com>
@@ -21,6 +21,22 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+
+# This command-line tool takes a list of words, namely "continuations".
+# Then, it counts how often each word is found in an input text coming from
+# STDIN.
+#
+# Particularly, it counts:
+# 1. capitalized occurrences after a dot or as the first word in a section,
+# 2. in the input case after a dot, and
+# 3. in the input case anywhere in the text (including after a dot in input
+#    case).
+#
+# Finally, these counts and a few percentages are reported on STDOUT.
+# This makes it possible to measure the frequency of each word as a sentence
+# starter and after the abbreviation marker versus its general corpus
+# frequency in default cases.
+
 import logging
 import os
 import sys
