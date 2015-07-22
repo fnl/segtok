@@ -59,11 +59,13 @@ logging.info('verbosity increased')
 logging.debug('verbosity increased')
 
 def sentence_start_pattern(continuation):
-    upper_cont = '{}{}'.format(continuation[0].upper(), continuation[1:])
-    return re.compile(r'(?:^|>|\t|\.\s)\s*{}\b'.format(upper_cont))
+    capitalized_continuation = continuation.capitalize()
+    pattern = r'(?:^|>|\t|\.\s)\s*{}\b'
+    return re.compile(pattern.format(capitalized_continuation))
 
 def abbreviation_pattern(continuation):
-    return re.compile(r'\.\s+{}\b'.format(continuation))
+    pattern = r'\.\s+{}\b'
+    return re.compile(pattern.format(continuation))
 
 inside_sentence = {}
 sentence_start = {}
@@ -78,10 +80,10 @@ cases = (sentence_start, after_abbreviation) if args.abbreviations else \
     (inside_sentence, sentence_start, after_abbreviation)
 
 for line in sys.stdin:
-    for continuation in inside_sentence:
-        for coll in cases:
-            pat_count = coll[continuation]
-            pat_count[1] += len(pat_count[0].findall(line))
+    for continuation in args.continuations:
+        for target in cases:
+            pattern_count = target[continuation]
+            pattern_count[1] += len(pattern_count[0].findall(line))
 
 if not args.abbreviations:
     print("Freq.SS | Likelih. | N.abbrev. | N.starters | N.inside | Word")
@@ -94,11 +96,11 @@ for continuation in inside_sentence:
     abbrev_count = after_abbreviation[continuation][1]
     total = starter_count + inside_count
     after_dot = starter_count + abbrev_count
-    fraction = (starter_count / float(total)) if total > 0 else 0.0
+    ss_fraction = (starter_count / float(total)) if total > 0 else 0.0
     likelihood = (abbrev_count / after_dot) if after_dot > 0 else 0.0
 
     if not args.abbreviations:
-        print('%.3f' % fraction, end=' | ')
+        print('%.3f' % ss_fraction, end=' | ')
 
     print('%.3f' % likelihood, abbrev_count, starter_count,
           sep=' | ', end=' | ')

@@ -66,6 +66,18 @@ In addition, it provides convenience functionality for English texts:
 Two compiled patterns (``IS_...``) can be used to detect if a word token contains a possessive-s marker ("Frank's") or is an apostrophe-based contraction ("didn't").
 Tokens that match these patterns can then be split using the ``split_possessive_markers`` and ``split_contractions`` functions, respectively.
 
+`count_continuations.py`
+------------------------
+
+This is a simple command-line tool that takes a list of words, namely "continuations".
+Then it counts how often each word is found in an input text coming from STDIN.
+Particularly, it counts
+1. capitalized occurrences after a dot or as the first word in a section,
+2. in the input case after a dot, and
+3. in the input case anywhere in the text (including after a dot in input case).
+Finally, these counts and a few percentages are reported on STDOUT.
+This makes it possible to measure the frequency of each word as a sentence starter and after the abbreviation marker versus its general corpus frequency in default cases.
+
 Legal
 =====
 
@@ -80,6 +92,7 @@ Contributors (kudos):
 History
 =======
 
+- **1.5.0** continuation words have been statistically evaluated and some poor choices removed (leading to more [precise] sentence splitting; see issue #9 by @Klim314 on GitHub)
 - **1.4.0** the ``word_tokenizer`` no longer splits on colons between digits (time, references, ...)
 - **1.3.1** fixed multiple dangling commas and colons (reported by Jim Geovedi)
 - **1.3.0** added Python2.7 support and Travis CI test integration (BIG thanks to Mikhail!)

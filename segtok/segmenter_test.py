@@ -2,8 +2,8 @@
 from __future__ import absolute_import, division, unicode_literals
 from unittest import TestCase
 from segtok.segmenter import split_single, split_multi, MAY_CROSS_ONE_LINE, \
-    split_newline, rewrite_line_separators, ABBREVIATIONS, NON_UNIX_LINEBREAK, \
-    to_unix_linebreaks
+    split_newline, rewrite_line_separators, ABBREVIATIONS, CONTINUATIONS, \
+    NON_UNIX_LINEBREAK, to_unix_linebreaks
 
 
 OSPL = """One sentence per line.
@@ -82,6 +82,14 @@ class TestSentenceSegmenter(TestCase):
                         'some Upper', 'in A, B', 'in A and B', 'A, B, and C'):
             self.assertTrue(ABBREVIATIONS.search(example) is None, example)
 
+    def test_CONTINUATIONS_detected(self):
+        for example in ('and this', 'are those'):
+            self.assertTrue(CONTINUATIONS.search(example) is not None, example)
+
+    def test_CONTINUATIONS_ignored(self):
+        for example in ('to be', 'Are those', 'not and'):
+            self.assertTrue(CONTINUATIONS.search(example) is None, example)
+
     def test_NON_UNIX_LINEBREAK_search(self):
         for example in ('\r', '\r\n', '\u2028'):
             self.assertTrue(NON_UNIX_LINEBREAK.search(example) is not None, repr(example))
@@ -114,6 +122,12 @@ class TestSentenceSegmenter(TestCase):
         sentences = ["This is expected, on the basis of (Olmsted, M. C., C. F. Anderson, "
                      "and M. T. Record, Jr. 1989. Proc. Natl. Acad. Sci. USA. 100:100), "
                      "to decrease sharply."]
+        self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
+
+    def test_continuations(self):
+        sentences = ["colonic colonization inhibits development of inflammatory lesions.",
+                     "to investigate whether an inf. of the pancreas was the case...",
+                     "though we hate to use capital lett. that usually separate sentences."]
         self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
 
     def test_inner_names(self):

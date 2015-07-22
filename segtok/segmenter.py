@@ -82,22 +82,39 @@ Note that a check is required to ensure the potential abbreviation is actually f
 and not some other sentence segmentation marker.
 """
 
+# PMC OA corpus statistics
+# SSs: sentence starters
+# abbrevs: abbreviations
+#
+# Words likely used as SSs (poor continuations, >10%):
+# after, though, upon, while, yet
+#
+# Words hardly used after abbrevs vs. SSs (poor continuations, <2%):
+# [after], as, at, but, during, for, in, nor, on, to, [though], [upon],
+# whereas, [while], within, [yet]
+#
+# Words hardly ever used as SSs (excellent continuations, <2%):
+# and, are, between, by, from, has, into, is, of, or, that, than, through,
+# via, was, were, with
+#
+# Words frequently used after abbrevs (excellent continuations, >10%):
+# [and, are, has, into, is, of, or, than, via, was, were]
+#
+# Grey zone: undecidable words -> leave in to bias towards under-splitting
+# whether
+
 CONTINUATIONS = compile(r""" ^ # at string start only
-(?: a(?: fter|nd|re|s|t )
-|   b(?: etween|ut|y )
-|   during
-|   f(?: or|rom )
+(?: a(?: nd|re )
+|   b(?: etween|y )
+|   from
 |   has
-|   i(?: n(?: to )?|s )
-|   nor
-|   o[fnr]
-|   t(?: han|hat|hrough|o )
-|   upon
+|   i(?: nto|s )
+|   o[fr]
+|   t(?: han|hat|hrough )
 |   via
-|   w(?: as|ere|h(?: ereas|ether|ile )|ith(?: in )? )
-|   yet
-)\s""", UNICODE | VERBOSE)
-"Lower-case two-letter words that in the given form usually don't start a sentence."
+|   w(?: as|ere|hether|ith )
+)\b""", UNICODE | VERBOSE)
+"Lower-case words that in the given form usually don't start a sentence."
 
 BEFORE_LOWER = compile(r""" .*?
 (?: [%s]"[\)\]]*           # ."]) .") ."
