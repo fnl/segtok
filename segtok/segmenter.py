@@ -423,12 +423,14 @@ def main():
             sid = 1
 
             for span in text_spans:
-                if last == '' and span not in ('', '\n'):
+                if last == '\n' and span not in ('', '\n'):
                     write_ids(tid, sid)
                     sid += 1
 
                 stdout.write(span)
-                last = span
+
+                if span:
+                    last = span
         else:
             for span in text_spans:
                 stdout.write(span)
