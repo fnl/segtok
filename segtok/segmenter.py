@@ -366,6 +366,7 @@ def main():
                             epilog='default encoding: ' + getdefaultencoding())
     parser.add_argument('files', metavar='FILE', nargs='*',
                         help='UTF-8 plain-text file(s); if absent, read from STDIN')
+    parser.add_argument('--with-id', action='store_true', help='STDIN input is ID tab TEXT; preserve in output as ID : N tab SENTENCE where N is the sentence number')
     parser.add_argument('--normal-breaks', '-n', action='store_true',
                         help=to_unix_linebreaks.__doc__)
     parser.add_argument('--bracket-spans', '-b', metavar="INT", type=int,
@@ -402,8 +403,35 @@ def main():
         parser.error('only single line splitting mode allowed when reading from STDIN')
 
     def segment(text):
-        for span in rewrite_line_separators(normal(text), pattern, short_sentence_length=args.bracket_spans):
-            stdout.write(span)
+        if not args.files and args.with_id:
+            tid, text = text.split('\t', 1)
+        else:
+            tid = None
+
+        text_spans = rewrite_line_separators(
+            normal(text), pattern, short_sentence_length=args.bracket_spans
+        )
+
+        if tid is not None:
+            def write_ids(tid, sid):
+                stdout.write(tid)
+                stdout.write('\t')
+                stdout.write(str(sid))
+                stdout.write('\t')
+
+            last = '\n'
+            sid = 1
+
+            for span in text_spans:
+                if last == '' and span not in ('', '\n'):
+                    write_ids(tid, sid)
+                    sid += 1
+
+                stdout.write(span)
+                last = span
+        else:
+            for span in text_spans:
+                stdout.write(span)
 
     if args.files:
         for txt_file_path in args.files:
