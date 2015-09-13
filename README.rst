@@ -80,7 +80,7 @@ Contributors (kudos):
 History
 =======
 
-- **dev** removed ``count_continuations.py`` from README (not appropriate)
+- **dev** removed ``count_continuations.py`` from README (not appropriate); the segmenter can preserve tab-separated text IDs when reading from STDIN and adds a sentence ID column
 - **1.5.0** continuation words have been statistically evaluated and some poor choices removed (leading to more [precise] sentence splitting; see issue #9 by @Klim314 on GitHub)
 - **1.4.0** the ``word_tokenizer`` no longer splits on colons between digits (time, references, ...)
 - **1.3.1** fixed multiple dangling commas and colons (reported by Jim Geovedi)
