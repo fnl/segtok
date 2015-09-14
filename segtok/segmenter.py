@@ -366,7 +366,11 @@ def main():
                             epilog='default encoding: ' + getdefaultencoding())
     parser.add_argument('files', metavar='FILE', nargs='*',
                         help='UTF-8 plain-text file(s); if absent, read from STDIN')
-    parser.add_argument('--with-id', action='store_true', help='STDIN input is ID tab TEXT; preserve in output as ID : N tab SENTENCE where N is the sentence number')
+    parser.add_argument('--with-ids', action='store_true',
+                        help='STDIN (only!) input is ID-tab-TEXT; the ID is '
+                             'preserved in the output as ID-tab-N-tab-SENTENCE '
+                             'where N is the incremental sentence number for that '
+                             'text ID')
     parser.add_argument('--normal-breaks', '-n', action='store_true',
                         help=to_unix_linebreaks.__doc__)
     parser.add_argument('--bracket-spans', '-b', metavar="INT", type=int,
@@ -392,18 +396,24 @@ def main():
             stdout = stdout.buffer
             stdin = stdin.buffer
 
-        stdout = codecs.getwriter(args.encoding or 'utf-8')(stdout, 'xmlcharrefreplace')
-        stdin = codecs.getreader(args.encoding or 'utf-8')(stdin, 'xmlcharrefreplace')
+        stdout = codecs.getwriter(
+            args.encoding or 'utf-8'
+        )(stdout, 'xmlcharrefreplace')
+
+        stdin = codecs.getreader(
+            args.encoding or 'utf-8'
+        )(stdin, 'xmlcharrefreplace')
 
         if not args.encoding:
             stderr.write('wrapped segmenter stdio with UTF-8 de/encoders')
             stderr.write(linesep)
 
     if not args.files and args.mode != single:
-        parser.error('only single line splitting mode allowed when reading from STDIN')
+        parser.error('only single line splitting mode allowed '
+                     'when reading from STDIN')
 
     def segment(text):
-        if not args.files and args.with_id:
+        if not args.files and args.with_ids:
             tid, text = text.split('\t', 1)
         else:
             tid = None
@@ -437,7 +447,9 @@ def main():
 
     if args.files:
         for txt_file_path in args.files:
-            with codecs.open(txt_file_path, 'r', encoding=(args.encoding or 'utf-8')) as fp:
+            with codecs.open(
+                txt_file_path, 'r', encoding=(args.encoding or 'utf-8')
+            ) as fp:
                 segment(fp.read())
     else:
         for line in stdin:
