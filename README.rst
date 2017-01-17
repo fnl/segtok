@@ -42,7 +42,7 @@ Test Suite
 The testing environment works with ``pytest``, ``tox`` and ``pyenv``.
 You first need to install pyenv_ (on OSX with Homebrew: ``brew install pyenv``), and ``tox`` with ``pytest`` (``pip3 install tox pytest``).
 Configuring ``pyenv`` depends on the Python versions you have installed.
-Here, we assume you have the latest 2.7 and 3 versions installed and only need to provide an environment for testing ``segtok`` against the 3.3 branch:
+Here, we assume you have the latest 2.7 and 3 versions installed and only need to provide an environment for testing ``segtok`` against the 3.3 branch::
 
     pyenv install 3.3.6
     pyenv global system 3.3.6
@@ -100,7 +100,7 @@ Contributors (kudos):
 History
 =======
 
-- **1.5.2** fixed a tokenizer bug when parsing URLs ending with root paths (``/``), prevented sentence splitting after U.K., U.S. and E.U. if followed by upper-case ("U.S. Air Force"), added missing Unicode hyphens and apostrophes, and added a test suite setup instructions
+- **1.5.2** fixed a tokenizer bug when parsing URLs ending with root paths (``/``), prevented sentence splitting after U.K., U.S. and E.U. if followed by upper-case ("U.S. Air Force"), added missing Unicode hyphens and apostrophes, and added test suite setup instructions
 - **1.5.1** removed ``count_continuations.py`` discussion from README (was only confusing); the segmenter now can preserve tab-separated text IDs before the text itself when reading from STDIN and then inserts a (tab-separated) sentence ID column for each sentence printed to STDOUT: see ``segmenter`` option ``--with-ids``
 - **1.5.0** continuation words have been statistically evaluated and some poor choices removed (leading to more [precise] sentence splitting; see issue #9 by @Klim314 on GitHub)
 - **1.4.0** the ``word_tokenizer`` no longer splits on colons between digits (time, references, ...)
