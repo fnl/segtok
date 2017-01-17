@@ -51,7 +51,7 @@ The second command is essential and indicates that your preferred Python binary 
 If you forget the second command, you will see errors like ``ERROR: InvocationError: Failed to get version_info for python3.3: pyenv: python3.3: command not found`` when running ``tox``.
 If you only have one Python version installed (say, 2.7), to fully run the tests, you must also install and globally configure the other version (e.g., the latest 3.x) with ``pyenv``, too.
 
-Finally, to run all of ``segtok``'s unit-test suite, just run ``tox``:
+Finally, to run all of ``segtok``'s unit-test suite, just run ``tox``::
 
     tox
 
