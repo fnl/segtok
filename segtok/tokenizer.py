@@ -30,10 +30,10 @@ except ImportError:
 
 __author__ = 'Florian Leitner <florian.leitner@gmail.com>'
 
-APOSTROPHES = '\'\u02BC\u2019\u2032'
+APOSTROPHES = '\'\u00B4\u02B9\u02BC\u2019\u2032'
 """All apostrophe-like marks, including the ASCII "single quote"."""
 
-APOSTROPHE = r"[\u02BC\u2019\u2032]"
+APOSTROPHE = r"[\u00B4\u02B9\u02BC\u2019\u2032]"
 """Any apostrophe-like marks, including "prime" but not the ASCII "single quote"."""
 
 LINEBREAK = r'(?:\r\n|\n|\r|\u2028)'
@@ -286,7 +286,7 @@ def word_tokenizer(sentence):
         (?:[^@]+@)?               # optional user
         (?:[\w-]+\.)+\w+          # required host
         (?::\d+)?                 # optional port
-        (?:\/[^?\#\s'">)\]}]+)?   # optional path
+        (?:\/[^?\#\s'">)\]}]*)?   # optional path
         (?:\?[^\#\s'">)\]}]+)?    # optional query
         (?:\#[^\s'">)\]}]+)?      # optional fragment
 

@@ -37,7 +37,7 @@ SENTENCE_TERMINALS = '.!?\u203C\u203D\u2047\u2048\u2049\u3002' \
 
 # Note that Unicode the category Pd is NOT a good set for valid word-breaking hyphens,
 # because it contains many dashes that should not be considered part of a word.
-HYPHENS = '\u00AD\u058A\u05BE\u0F0C\u1400\u1806\u2010\u2011\u2e17\u30A0-'
+HYPHENS = '\u00AD\u058A\u05BE\u0F0C\u1400\u1806\u2010-\u2012\u2e17\u30A0-'
 "Any valid word-breaking hyphen, including ASCII hyphen minus."
 
 # Use upper-case for abbreviations that always are capitalized:
@@ -48,6 +48,7 @@ ABBREVIATIONS = """
 approx Capt cf Col Dr f\.?e figs? Gen e\.?g i\.?e i\.?v
 Mag med Mr Mrs Mt nat No nr p\.e phil prof rer
 sci Sgt Sr Sra Srta St univ vol vs z\.B
+E\.U U\.K U\.S
 """.split()
 ABBREVIATIONS.extend(a.capitalize() for a in ABBREVIATIONS if a[0].islower())
 ABBREVIATIONS = '|'.join(sorted(ABBREVIATIONS))

@@ -29,6 +29,16 @@ What the heck??!?!
 [z] Last, but not least.
 (vii) And the Romans, too.
 Let's meet at 14.10 in N.Y..
+This happened in the U.S. last week.
+Brexit: The E.U. and the U.K. are separating.
+Refugees are welcome in the E.U..
+But they are thrown out of the U.K..
+And they never get to the U.S..
+The U.S. Air Force was called in.
+What about the E.U. High Court?
+And then there is the U.K. House of Commons.
+Now only this splits: the EU.
+A sentence ending in U.S. Another that won't split.
 12 monkeys ran into here.
 Nested (Parenthesis.
 (With words inside! (Right)) (More stuff. Uff, this is it!))

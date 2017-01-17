@@ -318,6 +318,16 @@ class TestWebTokenizer(TestCase):
         tokens = sentence.split()
         self.assertEqual(tokens, self.tokenizer(sentence))
 
+    def test_URL_at_string_end(self):
+        sentence = u"test this works https://file.server.com:8080/"
+        tokens = sentence.split()
+        self.assertEqual(tokens, self.tokenizer(sentence))
+
+    def test_URL_with_root_path(self):
+        sentence = u"test this https://file.server.com:8080/ as well"
+        tokens = sentence.split()
+        self.assertEqual(tokens, self.tokenizer(sentence))
+
     def test_link(self):
         sentence = u'<a href="http://here.to/me">hi'
         tokens = [u'<', u'a', u'href', u'="', u'http://here.to/me', u'">', u'hi']
