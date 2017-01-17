@@ -15,7 +15,7 @@ setup(
     author='Florian Leitner',
     author_email='florian.leitner@gmail.com',
     description='sentence segmentation and word tokenization tools',
-    keywords='sentence segmenter splitter word tokenizer token',
+    keywords='sentence segmenter splitter split word tokenizer token',
     license='MIT',
     packages=['segtok'],
     install_requires=['regex'],  # handles all Unicode categories in Regular Expressions
@@ -34,6 +34,8 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Scientific/Engineering :: Information Analysis',
         'Topic :: Software Development :: Libraries',
         'Topic :: Text Processing',
