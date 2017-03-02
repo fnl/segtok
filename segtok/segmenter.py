@@ -106,8 +106,8 @@ and not some other sentence segmentation marker.
 # Grey zone: undecidable words -> leave in to bias towards under-splitting
 # whether
 
-ENDS_IN_DIGITS = compile(r"\b\d+$")
-MONTH = compile(r"(J[äa]n|Ene|Feb|M[äa]r|A[pb]r|May|Jun|Jul|Aug|Sep|O[ck]t|Nov|D[ei][cz])")
+ENDS_IN_DATE_DIGITS = compile(r"\b[0123]?[0-9]$")
+MONTH = compile(r"(J[äa]n|Ene|Feb|M[äa]r|A[pb]r|May|Jun|Jul|Aug|Sep|O[ck]t|Nov|D[ei][cz]|0?[1-9]|1[012])")
 """
 Special facilities to detect European-style dates.
 """
@@ -288,7 +288,7 @@ def _abbreviation_joiner(spans):
             if spans[pos - 1][-1:].isspace() or spans[pos][0] == '.' and (
                 (pos + 1 < total and LONE_WORD.match(spans[pos + 1])) or
                 ABBREVIATIONS.search(spans[pos - 1]) or
-                (ENDS_IN_DIGITS.search(spans[pos - 1]) and MONTH.match(spans[pos + 1]))
+                (ENDS_IN_DATE_DIGITS.search(spans[pos - 1]) and MONTH.match(spans[pos + 1]))
             ):
                 pass  # join
             else:

@@ -157,7 +157,9 @@ class TestSentenceSegmenter(TestCase):
         self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
 
     def test_european_dates(self):
-        sentences = ["Der Unfall am 24. Dezember 2016."]
+        sentences = ["Der Unfall am 24. Dezember 2016.",
+                     "Am 13. Jän. 2006 war es regnerisch.",
+                     "Am 13. 1. 2006 war es regnerisch."]
         self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
 
     def test_multiline(self):
