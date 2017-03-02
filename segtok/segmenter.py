@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 A pattern-based sentence segmentation strategy; Known limitations:
 
@@ -24,18 +24,20 @@ Sentence splits will always be enforced at [consecutive] line separators.
 Important: Windows text files use ``\\r\\n`` as linebreaks and Mac files use ``\\r``;
 Convert the text to Unix linebreaks if the case.
 """
+from __future__ import absolute_import, unicode_literals
+import codecs
 from regex import compile, DOTALL, UNICODE, VERBOSE
 
 
 __author__ = 'Florian Leitner <florian.leitner@gmail.com>'
 
-SENTENCE_TERMINALS = '.!?\u203C\u203D\u2047\u2047\u2049\u3002' \
+SENTENCE_TERMINALS = '.!?\u203C\u203D\u2047\u2048\u2049\u3002' \
                      '\uFE52\uFE57\uFF01\uFF0E\uFF1F\uFF61'
 "The list of valid Unicode sentence terminal characters."
 
 # Note that Unicode the category Pd is NOT a good set for valid word-breaking hyphens,
 # because it contains many dashes that should not be considered part of a word.
-HYPHENS = '\u00AD\u058A\u05BE\u0F0C\u1400\u1806\u2010\u2011\u2e17\u30A0-'
+HYPHENS = '\u00AD\u058A\u05BE\u0F0C\u1400\u1806\u2010-\u2012\u2e17\u30A0-'
 "Any valid word-breaking hyphen, including ASCII hyphen minus."
 
 # Use upper-case for abbreviations that always are capitalized:
@@ -46,6 +48,7 @@ ABBREVIATIONS = """
 approx Capt cf Col Dr f\.?e figs? Gen e\.?g i\.?e i\.?v
 Mag med Mr Mrs Mt nat No nr p\.e phil prof rer
 sci Sgt Sr Sra Srta St univ vol vs z\.B
+E\.U U\.K U\.S
 """.split()
 ABBREVIATIONS.extend(a.capitalize() for a in ABBREVIATIONS if a[0].islower())
 ABBREVIATIONS = '|'.join(sorted(ABBREVIATIONS))
@@ -80,6 +83,27 @@ Note that a check is required to ensure the potential abbreviation is actually f
 and not some other sentence segmentation marker.
 """
 
+# PMC OA corpus statistics
+# SSs: sentence starters
+# abbrevs: abbreviations
+#
+# Words likely used as SSs (poor continuations, >10%):
+# after, though, upon, while, yet
+#
+# Words hardly used after abbrevs vs. SSs (poor continuations, <2%):
+# [after], as, at, but, during, for, in, nor, on, to, [though], [upon],
+# whereas, [while], within, [yet]
+#
+# Words hardly ever used as SSs (excellent continuations, <2%):
+# and, are, between, by, from, has, into, is, of, or, that, than, through,
+# via, was, were, with
+#
+# Words frequently used after abbrevs (excellent continuations, >10%):
+# [and, are, has, into, is, of, or, than, via, was, were]
+#
+# Grey zone: undecidable words -> leave in to bias towards under-splitting
+# whether
+
 ENDS_IN_DIGITS = compile(r"\b\d+$")
 MONTH = compile(r"(J[äa]n|Ene|Feb|M[äa]r|A[pb]r|May|Jun|Jul|Aug|Sep|O[ck]t|Nov|D[ei][cz])")
 """
@@ -87,29 +111,23 @@ Special facilities to detect European-style dates.
 """
 
 CONTINUATIONS = compile(r""" ^ # at string start only
-(?: a(?: fter|nd|re|s|t )
-|   b(?: etween|ut|y )
-|   during
-|   f(?: or|rom )
+(?: a(?: nd|re )
+|   b(?: etween|y )
+|   from
 |   has
-|   i(?: n(?: to )?|s )
-|   nor
-|   o[fnr]
-|   t(?: han|hat|hrough|o )
-|   upon
+|   i(?: nto|s )
+|   o[fr]
+|   t(?: han|hat|hrough )
 |   via
-|   w(?: as|ere|h(?: ereas|ether|ile )|ith(?: in )? )
-|   yet
-)\s""", UNICODE | VERBOSE)
-"Lower-case two-letter words that in the given form usually don't start a sentence."
+|   w(?: as|ere|hether|ith )
+)\b""", UNICODE | VERBOSE)
+"Lower-case words that in the given form usually don't start a sentence."
 
 BEFORE_LOWER = compile(r""" .*?
-(?: [%s]"[\)\]]*                  # ."]) .") ."
-|   [%s] [\)\]]+                  # .]) .)
-|   \b spp \.                     # spp.  (species pluralis)
-# |   \b \p{Ll}+ \. \p{Ll}+ \. [\)\]]*  # l.l. l.l.) l.ll.])
-|   \b \p{L} \p{Ll}? \.           # Ll. L.
-# |   \b \p{L} \.           # Ll. L.
+(?: [%s]"[\)\]]*           # ."]) .") ."
+|   [%s] [\)\]]+           # .]) .)
+|   \b spp \.              # spp.  (species pluralis)
+|   \b \p{L} \p{Ll}? \.    # Ll. L.
 ) \s+ $""" % (SENTENCE_TERMINALS, SENTENCE_TERMINALS), DOTALL | UNICODE | VERBOSE
 )
 """
@@ -129,6 +147,9 @@ UPPER_CASE_END = compile(r'\b[\p{Lu}\p{Lt}]\p{L}*\.\s+$', UNICODE)
 UPPER_CASE_START = compile(r'^(?:(?:\(\d{4}\)\s)?[\p{Lu}\p{Lt}]\p{L}*|\d+)[\.,:]\s+', UNICODE)
 "Inside brackets, 'Words' that can be part of a large abbreviation, like a journal name."
 
+SHORT_SENTENCE_LENGTH = 55
+"Length of either sentence fragment inside brackets to assume the fragment is not its own sentence."
+# This can be increased/decreased to heighten/lower the likelihood of splits inside brackets.
 
 NON_UNIX_LINEBREAK = compile(r'(?:\r\n|\r|\u2028)', UNICODE)
 "All linebreak sequence variants except the Unix newline (only)."
@@ -159,23 +180,19 @@ MAY_CROSS_ONE_LINE = _compile(2)
 "A segmentation pattern where two or more newline chars also terminate sentences."
 
 
-def split_single(text, join_on_lowercase=False):
+def split_single(text, join_on_lowercase=False, short_sentence_length=SHORT_SENTENCE_LENGTH):
     """
-    Default: split `text` at sentences terminals and at newline chars.
-
-    Optionally, `join_on_lowercase`, as lower-case letters per se do not force sentence joining.
+    Default: split `text` at sentence terminals and at newline chars.
     """
-    return _sentences(DO_NOT_CROSS_LINES.split(text), join_on_lowercase)
+    return _sentences(DO_NOT_CROSS_LINES.split(text), join_on_lowercase, short_sentence_length)
 
 
-def split_multi(text, join_on_lowercase=False):
+def split_multi(text, join_on_lowercase=False, short_sentence_length=SHORT_SENTENCE_LENGTH):
     """
     Sentences may contain non-consecutive (single) newline chars, while consecutive newline chars
     ("paragraph separators") always split sentences.
-
-    Optionally, `join_on_lowercase`, as lower-case letters per se do not force sentence joining.
     """
-    return _sentences(MAY_CROSS_ONE_LINE.split(text), join_on_lowercase)
+    return _sentences(MAY_CROSS_ONE_LINE.split(text), join_on_lowercase, short_sentence_length)
 
 
 def split_newline(text):
@@ -190,18 +207,21 @@ def split_newline(text):
             yield line
 
 
-def rewrite_line_separators(text, pattern, join_on_lowercase=False):
+def rewrite_line_separators(text, pattern, join_on_lowercase=False,
+                            short_sentence_length=SHORT_SENTENCE_LENGTH):
     """
     Remove line separator chars inside sentences and ensure there is a ``\\n`` at their end.
 
     :param text: input plain-text
     :param pattern: for the initial sentence splitting
     :param join_on_lowercase: always join sentences that start with lower-case
+    :param short_sentence_length: the upper boundary for text spans that are not split
+                                  into sentences inside brackets
     :return: a generator yielding the spans of text
     """
     offset = 0
 
-    for sentence in _sentences(pattern.split(text), join_on_lowercase):
+    for sentence in _sentences(pattern.split(text), join_on_lowercase, short_sentence_length):
         start = text.index(sentence, offset)
         intervening = text[offset:start]
 
@@ -219,25 +239,26 @@ def rewrite_line_separators(text, pattern, join_on_lowercase=False):
 
 def to_unix_linebreaks(text):
     """Replace non-Unix linebreak sequences (Windows, Mac, Unicode) with newlines (\\n)."""
-    return NON_UNIX_LINEBREAK.sub(text, '\n')
+    return NON_UNIX_LINEBREAK.sub('\n', text)
 
 
-def _sentences(spans, join_on_lowercase):
-    "Join spans to full sentences, optionally always joining on lower-case."
+def _sentences(spans, join_on_lowercase, short_sentence_length):
+    """Join spans back together into sentences as necessary."""
     last = None
+    shorterThanATypicalSentence = lambda c, l: c < short_sentence_length or l < short_sentence_length
 
     for current in _abbreviation_joiner(spans):
         if last is not None:
             if (join_on_lowercase or BEFORE_LOWER.match(last)) and LOWER_WORD.match(current):
                 last = '%s%s' % (last, current)
-            elif _isOpen(last) and (
-                _isNotOpened(current) or last.endswith(' et al. ') or (
+            elif shorterThanATypicalSentence(len(current), len(last)) and _is_open(last) and (
+                _is_not_opened(current) or last.endswith(' et al. ') or (
                     UPPER_CASE_END.search(last) and UPPER_CASE_START.match(current)
                 )
             ):
                 last = '%s%s' % (last, current)
-            elif _isOpen(last, '[]') and (
-                _isNotOpened(current, '[]') or last.endswith(' et al. ') or (
+            elif shorterThanATypicalSentence(len(current), len(last)) and _is_open(last, '[]') and (
+                _is_not_opened(current, '[]') or last.endswith(' et al. ') or (
                     UPPER_CASE_END.search(last) and UPPER_CASE_START.match(current)
                 )
             ):
@@ -253,8 +274,9 @@ def _sentences(spans, join_on_lowercase):
     if last is not None:
         yield last.strip()
 
+
 def _abbreviation_joiner(spans):
-    "Generic segmentation function."
+    """Join spans that match the ABBREVIATIONS pattern."""
     segment = None
     makeSentence = lambda start, end: ''.join(spans[start:end])
     total = len(spans)
@@ -277,13 +299,14 @@ def _abbreviation_joiner(spans):
         yield makeSentence(segment, total)
 
 
-def _isOpen(span: str, brackets='()'):
-    offset = span.find(brackets[0])
+def _is_open(span_str, brackets='()'):
+    """Check if the span ends with an unclosed `bracket`."""
+    offset = span_str.find(brackets[0])
     nesting = 0 if offset == -1 else 1
 
     while offset != -1:
-        opener = span.find(brackets[0], offset + 1)
-        closer = span.find(brackets[1], offset + 1)
+        opener = span_str.find(brackets[0], offset + 1)
+        closer = span_str.find(brackets[1], offset + 1)
 
         if opener == -1:
             if closer == -1:
@@ -307,13 +330,14 @@ def _isOpen(span: str, brackets='()'):
     return nesting > 0
 
 
-def _isNotOpened(span: str, brackets='()'):
-    offset = span.rfind(brackets[1])
+def _is_not_opened(span_str, brackets='()'):
+    """Check if the span starts with an unopened `bracket`."""
+    offset = span_str.rfind(brackets[1])
     nesting = 0 if offset == -1 else 1
 
     while offset != -1:
-        opener = span.rfind(brackets[0], 0, offset)
-        closer = span.rfind(brackets[1], 0, offset)
+        opener = span_str.rfind(brackets[0], 0, offset)
+        closer = span_str.rfind(brackets[1], 0, offset)
 
         if opener == -1:
             if closer == -1:
@@ -340,38 +364,101 @@ def _isNotOpened(span: str, brackets='()'):
 def main():
     # print one sentence per line
     from argparse import ArgumentParser
-    from sys import argv, stdout, stdin, getdefaultencoding
-    from os import path
-    SINGLE, MULTI = 0, 1
+    from sys import argv, stdout, stdin, stderr, getdefaultencoding, version_info
+    from os import path, linesep
+
+    single, multi = 0, 1
 
     parser = ArgumentParser(usage='%(prog)s [--mode] [FILE ...]',
                             description=__doc__, prog=path.basename(argv[0]),
                             epilog='default encoding: ' + getdefaultencoding())
     parser.add_argument('files', metavar='FILE', nargs='*',
                         help='UTF-8 plain-text file(s); if absent, read from STDIN')
+    parser.add_argument('--with-ids', action='store_true',
+                        help='STDIN (only!) input is ID-tab-TEXT; the ID is '
+                             'preserved in the output as ID-tab-N-tab-SENTENCE '
+                             'where N is the incremental sentence number for that '
+                             'text ID')
     parser.add_argument('--normal-breaks', '-n', action='store_true',
                         help=to_unix_linebreaks.__doc__)
+    parser.add_argument('--bracket-spans', '-b', metavar="INT", type=int,
+                        default=SHORT_SENTENCE_LENGTH,
+                        help="upper boundary for text spans that are not split "
+                             "into sentences inside brackets [%(default)d]")
+    parser.add_argument('--encoding', '-e', help='force another encoding to use')
     mode = parser.add_mutually_exclusive_group()
-    parser.set_defaults(mode=SINGLE)
-    mode.add_argument('--single', '-s', action='store_const', dest='mode', const=SINGLE,
+    parser.set_defaults(mode=single)
+    mode.add_argument('--single', '-s', action='store_const', dest='mode', const=single,
                       help=split_single.__doc__)
-    mode.add_argument('--multi', '-m', action='store_const', dest='mode', const=MULTI,
+    mode.add_argument('--multi', '-m', action='store_const', dest='mode', const=multi,
                       help=split_multi.__doc__)
 
     args = parser.parse_args()
     pattern = [DO_NOT_CROSS_LINES, MAY_CROSS_ONE_LINE, ][args.mode]
     normal = to_unix_linebreaks if args.normal_breaks else lambda t: t
 
-    if not args.files and args.mode != SINGLE:
-        parser.error('only single line splitting mode allowed when reading from STDIN')
+    # fix broken Unicode handling in Python 2.x
+    # see http://www.macfreek.nl/memory/Encoding_of_Python_stdout
+    if args.encoding or version_info < (3, 0):
+        if version_info >= (3, 0):
+            stdout = stdout.buffer
+            stdin = stdin.buffer
+
+        stdout = codecs.getwriter(
+            args.encoding or 'utf-8'
+        )(stdout, 'xmlcharrefreplace')
+
+        stdin = codecs.getreader(
+            args.encoding or 'utf-8'
+        )(stdin, 'xmlcharrefreplace')
+
+        if not args.encoding:
+            stderr.write('wrapped segmenter stdio with UTF-8 de/encoders')
+            stderr.write(linesep)
+
+    if not args.files and args.mode != single:
+        parser.error('only single line splitting mode allowed '
+                     'when reading from STDIN')
 
     def segment(text):
-        for span in rewrite_line_separators(normal(text), pattern):
-            stdout.write(span)
+        if not args.files and args.with_ids:
+            tid, text = text.split('\t', 1)
+        else:
+            tid = None
+
+        text_spans = rewrite_line_separators(
+            normal(text), pattern, short_sentence_length=args.bracket_spans
+        )
+
+        if tid is not None:
+            def write_ids(tid, sid):
+                stdout.write(tid)
+                stdout.write('\t')
+                stdout.write(str(sid))
+                stdout.write('\t')
+
+            last = '\n'
+            sid = 1
+
+            for span in text_spans:
+                if last == '\n' and span not in ('', '\n'):
+                    write_ids(tid, sid)
+                    sid += 1
+
+                stdout.write(span)
+
+                if span:
+                    last = span
+        else:
+            for span in text_spans:
+                stdout.write(span)
 
     if args.files:
         for txt_file_path in args.files:
-            segment(open(txt_file_path, 'rt', encoding='UTF-8').read())
+            with codecs.open(
+                txt_file_path, 'r', encoding=(args.encoding or 'utf-8')
+            ) as fp:
+                segment(fp.read())
     else:
         for line in stdin:
             segment(line)

@@ -1,11 +1,23 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Regex-based word tokenizers.
 
 Note that small/full/half-width character variants are *not* covered.
 If a text were to contains such characters, normalize it first.
 """
-from html import unescape
+from __future__ import absolute_import, unicode_literals
+import codecs
+try:
+    from html import unescape
+except ImportError:
+    # Python <= 3.3 doesn't have html.unescape
+    try:
+        from html.parser import HTMLParser
+    except ImportError:
+        # Python 2.x
+        from HTMLParser import HTMLParser
+    unescape = HTMLParser().unescape
+
 from regex import compile, UNICODE, VERBOSE
 
 try:
@@ -18,10 +30,10 @@ except ImportError:
 
 __author__ = 'Florian Leitner <florian.leitner@gmail.com>'
 
-APOSTROPHES = '\'\u02BC\u2019\u2032'
+APOSTROPHES = '\'\u00B4\u02B9\u02BC\u2019\u2032'
 """All apostrophe-like marks, including the ASCII "single quote"."""
 
-APOSTROPHE = r"[\u02BC\u2019\u2032]"
+APOSTROPHE = r"[\u00B4\u02B9\u02BC\u2019\u2032]"
 """Any apostrophe-like marks, including "prime" but not the ASCII "single quote"."""
 
 LINEBREAK = r'(?:\r\n|\n|\r|\u2028)'
@@ -35,6 +47,9 @@ NUMBER = r'[\p{Nd}\p{Nl}]'
 
 POWER = r'\u207B?[\u00B9\u00B2\u00B3]'
 """Superscript 1, 2, and 3, optionally prefixed with a minus sign."""
+
+SUBDIGIT = r'[\u2080-\u2089]'
+"""Subscript digits."""
 
 ALNUM = LETTER[:-1] + NUMBER[1:]
 """Any alphanumeric Unicode character: letter or number."""
@@ -124,7 +139,7 @@ def split_contractions(tokens):
             if length > 1:
                 for pos in range(length - 1, -1, -1):
                     if token[pos] in APOSTROPHES:
-                        if length > 2 and pos + 2 == length and token[-1] == 't' and token[pos - 1] == 'n':
+                        if 2 < length and pos + 2 == length and token[-1] == 't' and token[pos - 1] == 'n':
                             pos -= 1
 
                         tokens.insert(idx, token[:pos])
@@ -134,7 +149,7 @@ def split_contractions(tokens):
     return tokens
 
 
-def matches(regex):
+def _matches(regex):
     """Regular expression compiling function decorator."""
     def match_decorator(fn):
         automaton = compile(regex, UNICODE | VERBOSE)
@@ -145,7 +160,7 @@ def matches(regex):
     return match_decorator
 
 
-@matches(r'\s+')
+@_matches(r'\s+')
 def space_tokenizer(sentence):
     """
     For a given input `sentence`, return a list of its tokens.
@@ -156,7 +171,7 @@ def space_tokenizer(sentence):
     return [token for token in space_tokenizer.split(sentence) if token]
 
 
-@matches(r'(%s+)' % ALNUM)
+@_matches(r'(%s+)' % ALNUM)
 def symbol_tokenizer(sentence):
     """
     The symbol tokenizer extends the :func:`space_tokenizer` by separating alphanumerics.
@@ -167,11 +182,13 @@ def symbol_tokenizer(sentence):
             token in symbol_tokenizer.split(span) if token]
 
 
-@matches(r"""((?:
+@_matches(r"""((?:
     # Dots, except ellipsis
     {alnum} \. (?!\.\.)
     | # Comma, surrounded by digits (e.g., chemicals) or letters
     {alnum} , (?={alnum})
+    | # Colon, surrounded by digits (e.g., time, references)
+    {number} : (?={number})
     | # Hyphen, surrounded by digits (e.g., DNA endings: "5'-ACGT-3'") or letters
     {alnum} {apo}? {hyphen} (?={alnum})  # incl. optional apostrophe for DNA segments
     | # Apostophes, non-consecutive
@@ -183,9 +200,12 @@ def symbol_tokenizer(sentence):
     | # Terminal dimensions (superscript minus, 1, 2, and 3) attached to physical units
     #  size-prefix                 unit-acronym    dimension
     \b [yzafpn\u00B5mcdhkMGTPEZY]? {letter}{{1,3}} {power} $
+    | # Atom counts (subscript numbers) and ionization states (optional superscript
+    #   2 or 3 followed by a + or -) are attached to valid fragments of a chemical formula
+    \b (?:[A-Z][a-z]?|[\)\]])+ {subdigit}+ (?:[\u00B2\u00B3]?[\u207A\u207B])?
     | # Any (Unicode) letter, digit, or the underscore
     {alnum}
-    )+)""".format(alnum=ALNUM, apo=APOSTROPHE, power=POWER,
+    )+)""".format(alnum=ALNUM, apo=APOSTROPHE, power=POWER, subdigit=SUBDIGIT,
                   hyphen=HYPHEN, letter=LETTER, number=NUMBER))
 def word_tokenizer(sentence):
     """
@@ -197,7 +217,8 @@ def word_tokenizer(sentence):
        complete ("www.ex-ample.com", "EC1.2.3.4.5", etc.). The only dots that never are attached
        are triple dots (``...``; ellipsis).
     2. Commas surrounded by alphanumeric characters are maintained in the word, too, e.g. ``a,b``.
-       Commas, semi-colons, and colons "dangling" at the end of a token are always spliced off.
+       Colons surrounded by digits are maintained, e.g., 'at 12:30pm' or 'Isaiah 12:3'.
+       Commas, semi-colons, and colons dangling at the end of a token are always spliced off.
     3. Any two alphanumeric letters that are separated by a single hyphen are joined together;
        Those "inner" hyphens may optionally be followed by a linebreak surrounded by spaces;
        The spaces will be removed, however. For example, ``Hel- \\r\\n \t lo`` contains a (Windows)
@@ -210,6 +231,7 @@ def word_tokenizer(sentence):
     5. Superscript 1, 2, and 3, optionally prefixed with a superscript minus, are attached to a
        word if it is no longer than 3 letters (optionally 4 if the first letter is a power prefix
        in the range from yocto, y (10^-24) to yotta, Y (10^+24)).
+    6. Subscript digits are attached if prefixed with letters that look like a chemical formula.
     """
     pruned = HYPHENATED_LINEBREAK.sub(r'\1\2', sentence)
     tokens = [token for span in space_tokenizer(pruned) for
@@ -240,18 +262,22 @@ def word_tokenizer(sentence):
     dirty = True
     while dirty:
         dirty = False
-        count = len(tokens)
 
         for idx, word in enumerate(reversed(tokens), 1):
-            if len(word) > 1 and word[-1] in u',;:':
-                tokens[-idx] = word[:-1]
-                tokens.insert(count - idx + 1, word[-1])
+            while len(word) > 1 and word[-1] in u',;:':
+                char = word[-1]  # the dangling comma/colon
+                word = word[:-1]
+                tokens[-idx] = word
+                tokens.insert(len(tokens) - idx + 1, char)
+                idx += 1
                 dirty = True
+            if dirty:
+                break  # restart check to avoid index errors
 
     return tokens
 
 
-@matches(r"""
+@_matches(r"""
     (?<=^|[\s<"'(\[{])            # visual border
 
     (                             # RFC3986-like URIs:
@@ -260,7 +286,7 @@ def word_tokenizer(sentence):
         (?:[^@]+@)?               # optional user
         (?:[\w-]+\.)+\w+          # required host
         (?::\d+)?                 # optional port
-        (?:\/[^?\#\s'">)\]}]+)?   # optional path
+        (?:\/[^?\#\s'">)\]}]*)?   # optional path
         (?:\?[^\#\s'">)\]}]+)?    # optional query
         (?:\#[^\s'">)\]}]+)?      # optional fragment
 
@@ -284,7 +310,7 @@ def web_tokenizer(sentence):
 def main():
     # tokenize one sentence per line input
     from argparse import ArgumentParser
-    from sys import argv, stdout, stdin, getdefaultencoding
+    from sys import argv, stdout, stdin, stderr, getdefaultencoding, version_info
     from os import path, linesep
 
     def _tokenize(sentence, tokenizer):
@@ -317,6 +343,7 @@ def main():
                         help='split off the possessive marker from alphanumeric tokens')
     parser.add_argument('--split-contractions', '-c', action='store_true',  # TODO
                         help='split contractions like "don\'t" in alphanumeric tokens in two')
+    parser.add_argument('--encoding', '-e', help='define encoding to use')
     mode = parser.add_mutually_exclusive_group()
     parser.set_defaults(mode=TOKEN)
     mode.add_argument('--space', '-s', action='store_const', dest='mode', const=SPACE,
@@ -331,6 +358,20 @@ def main():
     args = parser.parse_args()
     tokenizer_func = TOKENIZER[args.mode]
 
+    # fix broken Unicode handling in Python 2.x
+    # see http://www.macfreek.nl/memory/Encoding_of_Python_stdout
+    if args.encoding or version_info < (3, 0):
+        if version_info >= (3, 0):
+            stdout = stdout.buffer
+            stdin = stdin.buffer
+
+        stdout = codecs.getwriter(args.encoding or 'utf-8')(stdout, 'xmlcharrefreplace')
+        stdin = codecs.getreader(args.encoding or 'utf-8')(stdin, 'xmlcharrefreplace')
+
+        if not args.encoding:
+            stderr.write('wrapped tokenizer stdio with UTF-8 de/encoders')
+            stderr.write(linesep)
+
     if args.split_contractions:
         tokenizer = lambda sentence: split_contractions(tokenizer_func(sentence))
     elif args.possessive_marker:
@@ -340,8 +381,9 @@ def main():
 
     if args.files:
         for txt_file_path in args.files:
-            for line in open(txt_file_path, encoding='utf-8'):
-                _tokenize(line, tokenizer)
+            with codecs.open(txt_file_path, 'r', encoding=(args.encoding or 'utf-8')) as fp:
+                for line in fp:
+                    _tokenize(line, tokenizer)
     else:
         for line in stdin:
             _tokenize(line, tokenizer)

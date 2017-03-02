@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from setuptools import setup
 
 try:
@@ -9,12 +10,12 @@ except IOError:
 
 setup(
     name='segtok',
-    version='1.1.1',
+    version='1.5.2',
     url='https://github.com/fnl/segtok',
     author='Florian Leitner',
     author_email='florian.leitner@gmail.com',
     description='sentence segmentation and word tokenization tools',
-    keywords='sentence segmenter splitter word tokenizer token',
+    keywords='sentence segmenter splitter split word tokenizer token',
     license='MIT',
     packages=['segtok'],
     install_requires=['regex'],  # handles all Unicode categories in Regular Expressions
@@ -28,7 +29,13 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Scientific/Engineering :: Information Analysis',
         'Topic :: Software Development :: Libraries',
         'Topic :: Text Processing',

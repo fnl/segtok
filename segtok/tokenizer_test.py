@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import, division, unicode_literals
 from unittest import TestCase
 from segtok.tokenizer import space_tokenizer, symbol_tokenizer, word_tokenizer, web_tokenizer, IS_POSSESSIVE, \
     split_possessive_markers, IS_CONTRACTION, split_contractions
@@ -137,6 +138,17 @@ class TestWordTokenizer(TestCase):
     def test_comma_inner(self):
         self.assert_inner(u',')
 
+    def test_dot_inner(self):
+        self.assert_inner(u'.')
+
+    def test_colon_inner(self):
+        sentence = u"12:6 12:50"
+        tokens = [u'12:6', u'12:50']
+        self.assertSequenceEqual(tokens, self.tokenizer(sentence))
+        sentence = u"abc:def 12:34:abc abc:12:34"
+        tokens = [u'abc', u':', u'def', u'12:34', u':', u'abc', u'abc', u':', u'12:34']
+        self.assertSequenceEqual(tokens, self.tokenizer(sentence))
+
     def assert_dangling(self, sep):
         sentence = u"that %sbut not%s this" % (sep, sep)
         tokens = [u'that', sep, u'but', u'not', sep, u'this']
@@ -148,6 +160,22 @@ class TestWordTokenizer(TestCase):
     def test_comma_dangling(self):
         self.assert_dangling(u',')
 
+    def test_colon_dangling(self):
+        self.assert_dangling(u':')
+
+    def test_semicolon_dangling(self):
+        self.assert_dangling(u';')
+
+    def test_comma_dangling_twice(self):
+        sentence = u'token (, hi), issue'
+        tokens = [u'token', '(', ',', 'hi', ')', ',', 'issue']
+        self.assertSequenceEqual(tokens, self.tokenizer(sentence))
+
+    def test_comma_dangling_double(self):
+        sentence = u'token (,; hi), issue'
+        tokens = [u'token', '(', ',', ';', 'hi', ')', ',', 'issue']
+        self.assertSequenceEqual(tokens, self.tokenizer(sentence))
+
     def assert_terminal(self, sep):
         sentence = u"A%s" % sep
         tokens = [u'A', sep]
@@ -158,6 +186,12 @@ class TestWordTokenizer(TestCase):
 
     def test_comma_terminal(self):
         self.assert_terminal(u',')
+
+    def test_colon_terminal(self):
+        self.assert_terminal(u':')
+
+    def test_semicolon_terminal(self):
+        self.assert_terminal(u';')
 
     def test_hyphen_repeat(self):
         sentence = u"A--B"
@@ -258,6 +292,15 @@ class TestWordTokenizer(TestCase):
         tokens = [u'10', u'V', u'\u00B7', u'm\u207B\u00B9', u'msec\u00B2']
         self.assertSequenceEqual(tokens, self.tokenizer(sentence))
 
+    def test_chemical_formula(self):
+        sentence = u"O\u2082 H\u2081\u2082Si\u2085O\u2082 " \
+                   u"Al\u2082(SO\u2084)\u2083 [NO\u2084]\u207B Not\u2081"
+        tokens = [u"O\u2082", u"H\u2081\u2082Si\u2085O\u2082",
+                  u"Al\u2082", u"(", u"SO\u2084", u")\u2083",
+                  u"[", u"NO\u2084", u"]\u207B",
+                  u"Not", u'\u2081']
+        self.assertSequenceEqual(tokens, self.tokenizer(sentence))
+
     def test_URLs(self):
         sentence = u"http://www.example.com/path/to.file?kwd=1&arg"
         tokens = [u'http', u'://', u'www.example.com', u'/', u'path',
@@ -272,6 +315,16 @@ class TestWebTokenizer(TestCase):
 
     def test_URL(self):
         sentence = u"test ftps://user:pass@file.server.com:1234/get/me.this?what=that#part test"
+        tokens = sentence.split()
+        self.assertEqual(tokens, self.tokenizer(sentence))
+
+    def test_URL_at_string_end(self):
+        sentence = u"test this works https://file.server.com:8080/"
+        tokens = sentence.split()
+        self.assertEqual(tokens, self.tokenizer(sentence))
+
+    def test_URL_with_root_path(self):
+        sentence = u"test this https://file.server.com:8080/ as well"
         tokens = sentence.split()
         self.assertEqual(tokens, self.tokenizer(sentence))
 

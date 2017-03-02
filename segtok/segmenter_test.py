@@ -1,7 +1,9 @@
 # coding=utf-8
+from __future__ import absolute_import, division, unicode_literals
 from unittest import TestCase
 from segtok.segmenter import split_single, split_multi, MAY_CROSS_ONE_LINE, \
-    split_newline, rewrite_line_separators, ABBREVIATIONS, NON_UNIX_LINEBREAK
+    split_newline, rewrite_line_separators, ABBREVIATIONS, CONTINUATIONS, \
+    NON_UNIX_LINEBREAK, to_unix_linebreaks
 
 
 OSPL = """One sentence per line.
@@ -27,6 +29,16 @@ What the heck??!?!
 [z] Last, but not least.
 (vii) And the Romans, too.
 Let's meet at 14.10 in N.Y..
+This happened in the U.S. last week.
+Brexit: The E.U. and the U.K. are separating.
+Refugees are welcome in the E.U..
+But they are thrown out of the U.K..
+And they never get to the U.S..
+The U.S. Air Force was called in.
+What about the E.U. High Court?
+And then there is the U.K. House of Commons.
+Now only this splits: the EU.
+A sentence ending in U.S. Another that won't split.
 12 monkeys ran into here.
 Nested (Parenthesis.
 (With words inside! (Right)) (More stuff. Uff, this is it!))
@@ -49,6 +61,12 @@ Always last, clear closing example."""
 SENTENCES = OSPL.split('\n')
 TEXT = ' '.join(SENTENCES)
 
+
+class TestToUnixLinebreak(TestCase):
+
+    def test_function(self):
+        result = to_unix_linebreaks("This\r\none.")
+        self.assertEqual("This\none.", result)
 
 class TestSentenceSegmenter(TestCase):
 
@@ -73,6 +91,14 @@ class TestSentenceSegmenter(TestCase):
         for example in ('not NOV', 'USA', 'Upper', 'Ab', 'some A', 'lower',
                         'some Upper', 'in A, B', 'in A and B', 'A, B, and C'):
             self.assertTrue(ABBREVIATIONS.search(example) is None, example)
+
+    def test_CONTINUATIONS_detected(self):
+        for example in ('and this', 'are those'):
+            self.assertTrue(CONTINUATIONS.search(example) is not None, example)
+
+    def test_CONTINUATIONS_ignored(self):
+        for example in ('to be', 'Are those', 'not and'):
+            self.assertTrue(CONTINUATIONS.search(example) is None, example)
 
     def test_NON_UNIX_LINEBREAK_search(self):
         for example in ('\r', '\r\n', '\u2028'):
@@ -108,6 +134,12 @@ class TestSentenceSegmenter(TestCase):
                      "to decrease sharply."]
         self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
 
+    def test_continuations(self):
+        sentences = ["colonic colonization inhibits development of inflammatory lesions.",
+                     "to investigate whether an inf. of the pancreas was the case...",
+                     "though we hate to use capital lett. that usually separate sentences."]
+        self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
+
     def test_inner_names(self):
         sentences = ["Bla bla [Sim et al. (1981) Biochem. J. 193, 129-141].",
                      "The adjusted (ml. min-1. 1.73 m-2) rate."]
@@ -135,6 +167,13 @@ class TestSentenceSegmenter(TestCase):
     def test_parenthesis(self):
         sentences = ["Nested ((Parenthesis. (With words right (inside))) (More stuff. "
                      "Uff, this is it!))", "In the Big City."]
+        self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
+
+    def test_parenthesis_with_sentences(self):
+        sentences = ["The segmenter segments on single lines or to consecutive lines.",
+                     "(If you want to extract sentences that cross newlines, remove those line-breaks.",
+                     "Segtok assumes your content has some minimal semantical meaning.)",
+                     "It gracefully handles this and similar issues."]
         self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
 
     def test_unclosed_brackets(self):
