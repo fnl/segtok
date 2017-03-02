@@ -49,6 +49,7 @@ An abbreviation at the end..
 This is a sentence terminal ellipsis...
 This is another sentence terminal ellipsis....
 An easy to handle G. species mention.
+Am 13. Jän. 2006 war es regnerisch.
 This quote "He said it." is actually inside.
 A. The first assumption.
 B. The second bullet.

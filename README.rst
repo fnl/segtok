@@ -100,6 +100,7 @@ Contributors (kudos):
 History
 =======
 
+- **1.5.3** added support for European-style number-dates and for months (24. Dez. 2016)
 - **1.5.2** fixed a tokenizer bug when parsing URLs ending with root paths (``/``), prevented sentence splitting after U.K., U.S. and E.U. if followed by upper-case ("U.S. Air Force"), added missing Unicode hyphens and apostrophes, and added test suite setup instructions
 - **1.5.1** removed ``count_continuations.py`` discussion from README (was only confusing); the segmenter now can preserve tab-separated text IDs before the text itself when reading from STDIN and then inserts a (tab-separated) sentence ID column for each sentence printed to STDOUT: see ``segmenter`` option ``--with-ids``
 - **1.5.0** continuation words have been statistically evaluated and some poor choices removed (leading to more [precise] sentence splitting; see issue #9 by @Klim314 on GitHub)
