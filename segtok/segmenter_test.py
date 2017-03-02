@@ -123,6 +123,10 @@ class TestSentenceSegmenter(TestCase):
                      "far the only species A. enterica known."]
         self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
 
+    def test_european_dates(self):
+        sentences = ["Der Unfall am 24. Dezember 2016."]
+        self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
+
     def test_multiline(self):
         text = "This is a\nmultiline sentence. And this is Mr.\nAbbrevation."
         ml_sentences = ["This is a\nmultiline sentence.", "And this is Mr.\nAbbrevation."]

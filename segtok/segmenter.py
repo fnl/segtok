@@ -51,8 +51,8 @@ ABBREVIATIONS.extend(a.capitalize() for a in ABBREVIATIONS if a[0].islower())
 ABBREVIATIONS = '|'.join(sorted(ABBREVIATIONS))
 ABBREVIATIONS = compile(r"""
 (?: \b(?:%s) # 1. known abbreviations,
-|   ^\S      # 2. a single, non-space character (only),
-|   ^\d+     # 3. a series of digits (only), or
+|   ^\S      # 2. a single, non-space character "sentence" (only),
+|   ^\d+     # 3. a series of digits "sentence" (only), or
 |   (?: \b   # 4. terminal letters A.-A, A.A, or A, if prefixed with:
     # 4.a. something that makes them most likely a human first name initial
         (?: [Bb]y
@@ -78,6 +78,12 @@ ABBREVIATIONS = compile(r"""
 Common abbreviations at the candidate sentence end that normally don't terminate a sentence.
 Note that a check is required to ensure the potential abbreviation is actually followed by a dot
 and not some other sentence segmentation marker.
+"""
+
+ENDS_IN_DIGITS = compile(r"\b\d+$")
+MONTH = compile(r"(J[äa]n|Ene|Feb|M[äa]r|A[pb]r|May|Jun|Jul|Aug|Sep|O[ck]t|Nov|D[ei][cz])")
+"""
+Special facilities to detect European-style dates.
 """
 
 CONTINUATIONS = compile(r""" ^ # at string start only
@@ -247,7 +253,6 @@ def _sentences(spans, join_on_lowercase):
     if last is not None:
         yield last.strip()
 
-
 def _abbreviation_joiner(spans):
     "Generic segmentation function."
     segment = None
@@ -258,7 +263,8 @@ def _abbreviation_joiner(spans):
         if pos and pos % 2:  # i: even => segment, uneven => (potential) terminal
             if spans[pos - 1][-1:].isspace() or spans[pos][0] == '.' and (
                 (pos + 1 < total and LONE_WORD.match(spans[pos + 1])) or
-                ABBREVIATIONS.search(spans[pos - 1])
+                ABBREVIATIONS.search(spans[pos - 1]) or
+                (ENDS_IN_DIGITS.search(spans[pos - 1]) and MONTH.match(spans[pos + 1]))
             ):
                 pass  # join
             else:
