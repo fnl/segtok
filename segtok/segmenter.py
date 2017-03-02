@@ -48,7 +48,7 @@ ABBREVIATIONS = """
 approx Capt cf Col Dr f\.?e figs? Gen e\.?g i\.?e i\.?v
 Mag med Mr Mrs Mt nat No nr p\.e phil prof rer
 sci Sgt Sr Sra Srta St univ vol vs z\.B
-Jän Jan Ene Feb Mär Mar Apr Abr May Jun Jul Aug Sep Oct Okt Nov Dic Dez Dec
+Jän Jan Ene Feb Mär Mar Apr Abr May Jun Jul Aug Sep Sept Oct Okt Nov Dic Dez Dec
 E\.U U\.K U\.S
 """.split()
 ABBREVIATIONS.extend(a.capitalize() for a in ABBREVIATIONS if a[0].islower())
