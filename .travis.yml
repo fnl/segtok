@@ -1,5 +1,5 @@
 language: python
-python: 2.7
+python: 3.6
 env:
 - TOXENV=py27
 - TOXENV=py27-locale
