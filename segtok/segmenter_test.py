@@ -50,6 +50,8 @@ This is a sentence terminal ellipsis...
 This is another sentence terminal ellipsis....
 An easy to handle G. species mention.
 Am 13. Jän. 2006 war es regnerisch.
+The administrative basis for Lester B. Pearson's foreign policy was developed later.
+This model was introduced by Dr. Edgar F. Codd after initial criticisms.
 This quote "He said it." is actually inside.
 A. The first assumption.
 B. The second bullet.
@@ -160,6 +162,11 @@ class TestSentenceSegmenter(TestCase):
         sentences = ["Der Unfall am 24. Dezember 2016.",
                      "Am 13. Jän. 2006 war es regnerisch.",
                      "Am 13. 1. 2006 war es regnerisch."]
+        self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
+
+    def test_middle_name_initials(self):
+        sentences = ["The administrative basis for Lester B. Pearson's foreign policy was developed later.",
+                     "This model was introduced by Dr. Edgar F. Codd after initial criticisms."]
         self.assertSequenceEqual(sentences, list(split_single(' '.join(sentences))))
 
     def test_multiline(self):

@@ -141,6 +141,12 @@ Endings that, if followed by a lower-case word, are not sentence terminals:
 LOWER_WORD = compile(r'^\p{Ll}+[%s]?\p{Ll}*\b' % HYPHENS, UNICODE)
 "Lower-case words are not sentence starters (after an abbreviation)."
 
+MIDDLE_INITIAL_END = compile(r'\b\p{Lu}\p{Ll}+\W+\p{Lu}$', UNICODE)
+"Upper-case initial after upper-case word at the end of a string."
+
+UPPER_WORD_START = compile(r'^\p{Lu}\p{Ll}+\b', UNICODE)
+"Upper-case word at the beginning of a string."
+
 LONE_WORD = compile(r'^\p{Ll}+[\p{Ll}\p{Nd}%s]*$' % HYPHENS, UNICODE)
 "Any 'lone' lower-case word [with hyphens or digits inside] is a continuation."
 
@@ -284,13 +290,21 @@ def _abbreviation_joiner(spans):
     total = len(spans)
 
     for pos in range(total):
-        if pos and pos % 2:  # i: even => segment, uneven => (potential) terminal
-            if spans[pos - 1][-1:].isspace() or spans[pos][0] == '.' and (
-                (pos + 1 < total and LONE_WORD.match(spans[pos + 1])) or
-                ABBREVIATIONS.search(spans[pos - 1]) or
-                (ENDS_IN_DATE_DIGITS.search(spans[pos - 1]) and MONTH.match(spans[pos + 1]))
-            ):
-                pass  # join
+        if pos and pos % 2:  # even => segment, uneven => (potential) terminal
+            prev_s = spans[pos - 1]
+            marker = spans[pos]
+            next_s = spans[pos+1] if pos + 1 < total else None
+
+            if prev_s[-1:].isspace():
+                pass # join
+            elif marker[0] == '.' and ABBREVIATIONS.search(prev_s):
+                pass # join
+            elif marker[0] == '.' and next_s and (
+                    LONE_WORD.match(next_s) or
+                    (ENDS_IN_DATE_DIGITS.search(prev_s) and MONTH.match(next_s)) or
+                    (MIDDLE_INITIAL_END.search(prev_s) and UPPER_WORD_START.match(next_s))
+                    ):
+                pass # join
             else:
                 yield makeSentence(segment, pos + 1)
                 segment = None
