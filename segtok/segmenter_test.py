@@ -195,6 +195,10 @@ class TestSentenceSegmenter(TestCase):
         text = "This is a\nmultiline sentence."
         self.assertSequenceEqual(text.split('\n'), list(split_single(text)))
 
+    def test_linebreak2(self):
+        text = "Folding Beijing\nby Hao Jingfang"
+        self.assertSequenceEqual(text.split('\n'), list(split_single(text)))
+
     def test_newline(self):
         self.assertSequenceEqual(SENTENCES, list(split_newline(OSPL)))
 

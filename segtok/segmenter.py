@@ -192,7 +192,8 @@ def split_single(text, join_on_lowercase=False, short_sentence_length=SHORT_SENT
     """
     Default: split `text` at sentence terminals and at newline chars.
     """
-    return _sentences(DO_NOT_CROSS_LINES.split(text), join_on_lowercase, short_sentence_length)
+    sentences = _sentences(DO_NOT_CROSS_LINES.split(text), join_on_lowercase, short_sentence_length)
+    return [s for ss in sentences  for s in ss.split('\n')]
 
 
 def split_multi(text, join_on_lowercase=False, short_sentence_length=SHORT_SENTENCE_LENGTH):
@@ -442,9 +443,13 @@ def main():
         else:
             tid = None
 
-        text_spans = rewrite_line_separators(
-            normal(text), pattern, short_sentence_length=args.bracket_spans
-        )
+        if args.mode == single:
+            sentences = split_single(normal(text), short_sentence_length=args.bracket_spans)
+            text_spans = [i for s in sentences for i in (s, '\n')]
+        else:
+            text_spans = rewrite_line_separators(
+                normal(text), pattern, short_sentence_length=args.bracket_spans
+            )
 
         if tid is not None:
             def write_ids(tid, sid):
