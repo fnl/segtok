@@ -91,15 +91,17 @@ Legal
 
 License: `MIT <http://opensource.org/licenses/MIT>`_
 
-Copyright (c) 2014-2017, Florian Leitner. All rights reserved.
+Copyright (c) 2014-2018, Florian Leitner. All rights reserved.
 
 Contributors (kudos):
 
 - Mikhail Korobov (@kmike; port to Python2.7 and Travis CI integration)
+- Georg Kucsko (@gkucsko; splitting sentences at terminals followed by noise)
 
 History
 =======
 
+- **1.5.7** enhancement: split sentences even if the terminal is followed by invalid characters (contributed by @gkucsko)
 - **1.5.6** fixed a bug that would lead to joining lines in single-line mode (#11, reported by @yucongo)
 - **1.5.5** support for middle name initials ("Lester P. Pearson") 
 - **1.5.4** also support for European-style number-dates with numeric months (24. 12. 2016)
