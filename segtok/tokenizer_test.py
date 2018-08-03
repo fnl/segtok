@@ -223,6 +223,16 @@ class TestWordTokenizer(TestCase):
         tokens = [u'1.2.3', u',', u'f.e.', u',', u'is', u'Mr.', u'.', u'Abbreviation', u'.']
         self.assertSequenceEqual(tokens, self.tokenizer(sentence))
 
+    def test_splice_sentence_terminal_start(self):
+        sentence = u"This is a ?sentence,"
+        tokens = [u'This', u'is', u'a', u'?', u'sentence', u',']
+        self.assertSequenceEqual(tokens, self.tokenizer(sentence))
+
+    def test_splice_sentence_terminal_end(self):
+        sentence = u"This is a sentence?,"
+        tokens = [u'This', u'is', u'a', u'sentence', u'?', u',']
+        self.assertSequenceEqual(tokens, self.tokenizer(sentence))
+
     def test_final_abbreviation(self):
         sentence = u"This is another abbrev..\n"
         tokens = [u'This', u'is', u'another', u'abbrev.', u'.']
