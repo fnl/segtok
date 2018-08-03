@@ -254,7 +254,7 @@ def word_tokenizer(sentence):
             elif any(word.find(t) == 0 for t in SENTENCE_TERMINALS):
                 # ".stuff"
                 tokens[-idx] = word[0]
-                tokens.insert(len(tokens) - idx, word[:-1])
+                tokens.insert(len(tokens) - idx + 1, word[1:])
 
             break
 
