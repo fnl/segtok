@@ -10,6 +10,8 @@ segtok
 .. image:: https://travis-ci.org/fnl/segtok.svg?branch=master
     :target: https://travis-ci.org/fnl/segtok
 
+NB: segtok v2, code-named syntok_, is available and fixes some tricky issues with segtok, in particular splitting sentence with terminals not followed by spaces.Like this :-).
+
 -------------------------------------------
 Sentence segmentation and word tokenization
 -------------------------------------------
@@ -122,3 +124,4 @@ History
 
 .. _blog: http://fnl.es/segtok-a-segmentation-and-tokenization-library.html
 .. _pyenv: https://github.com/yyuu/pyenv
+.. _syntok: https://github.com/fnl/syntok
