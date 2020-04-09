@@ -10,13 +10,14 @@ except IOError:
 
 setup(
     name='segtok',
-    version='1.5.7',
+    version='1.5.9',
     url='https://github.com/fnl/segtok',
     author='Florian Leitner',
     author_email='florian.leitner@gmail.com',
     description='sentence segmentation and word tokenization tools',
     keywords='sentence segmenter splitter split word tokenizer token',
     license='MIT',
+    data_files = [("", ["LICENSE.txt"])],
     packages=['segtok'],
     install_requires=['regex'],  # handles all Unicode categories in Regular Expressions
     long_description=long_description,

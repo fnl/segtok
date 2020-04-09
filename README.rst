@@ -103,6 +103,7 @@ Contributors (kudos):
 History
 =======
 
+- **1.5.9** added the license as a LICENSE.txt file to this repository
 - **1.5.7** enhancement: split sentences even if the terminal is followed by invalid characters (contributed by @gkucsko)
 - **1.5.6** fixed a bug that would lead to joining lines in single-line mode (#11, reported by @yucongo)
 - **1.5.5** support for middle name initials ("Lester P. Pearson") 
