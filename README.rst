@@ -26,8 +26,8 @@ For a more informed introduction to this tool, please read the article on my blo
 Install
 =======
 
-To use this package, you minimally should have the latest version of Python 2.7 or any 3.4+ branch installed.
-The package is expected to work with both Python 2.7 and 3.4+, tested against those latest Python branches, as well as Python 3.4.
+To use this package, you minimally should have the latest version of Python 2.7 or any 3.5+ branch installed.
+The package is expected to work with both Python 2.7 and 3.5+, tested against those latest Python branches, as well as Python 3.5.
 The easiest way to get ``segtok`` installed is using ``pip`` or any other package manager that works with PyPI::
 
     pip3 install segtok
