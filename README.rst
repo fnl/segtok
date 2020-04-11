@@ -26,8 +26,8 @@ For a more informed introduction to this tool, please read the article on my blo
 Install
 =======
 
-To use this package, you minimally should have the latest version of Python 2.7 or any 3.3+ branch installed.
-The package is expected to work with both Python 2.7 and 3.3+, tested against those latest Python branches, as well as Python 3.3.
+To use this package, you minimally should have the latest version of Python 2.7 or any 3.4+ branch installed.
+The package is expected to work with both Python 2.7 and 3.4+, tested against those latest Python branches, as well as Python 3.4.
 The easiest way to get ``segtok`` installed is using ``pip`` or any other package manager that works with PyPI::
 
     pip3 install segtok
@@ -44,13 +44,13 @@ Test Suite
 The testing environment works with ``pytest``, ``tox`` and ``pyenv``.
 You first need to install pyenv_ (on OSX with Homebrew: ``brew install pyenv``), and ``tox`` with ``pytest`` (``pip3 install tox pytest``).
 Configuring ``pyenv`` depends on the Python versions you have installed.
-Here, we assume you have the latest 2.7 and 3 versions installed and only need to provide an environment for testing ``segtok`` against the 3.3 branch::
+Here, we assume you have the latest 2.7 and 3 versions installed and only need to provide an environment for testing ``segtok`` against the 3.8 branch::
 
-    pyenv install 3.3.6
-    pyenv global system 3.3.6
+    pyenv install 3.8.2
+    pyenv global system 3.8.2
 
-The second command is essential and indicates that your preferred Python binary is the system version and then the 3.3.6 branch.
-If you forget the second command, you will see errors like ``ERROR: InvocationError: Failed to get version_info for python3.3: pyenv: python3.3: command not found`` when running ``tox``.
+The second command is essential and indicates that your preferred Python binary is the system version and then the 3.8.2 branch.
+If you forget the second command, you will see errors like ``ERROR: InvocationError: Failed to get version_info for python3.8: pyenv: python3.8: command not found`` when running ``tox``.
 If you only have one Python version installed (say, 2.7), to fully run the tests, you must also install and globally configure the other version (e.g., the latest 3.x) with ``pyenv``, too.
 
 Finally, to run all of ``segtok``'s unit-test suite, just run ``tox``::
@@ -103,6 +103,7 @@ Contributors (kudos):
 History
 =======
 
+- **nightly** removed support for Python 3.3 from tox and updated README.
 - **1.5.9** added the license as a LICENSE.txt file to this repository
 - **1.5.7** enhancement: split sentences even if the terminal is followed by invalid characters (contributed by @gkucsko)
 - **1.5.6** fixed a bug that would lead to joining lines in single-line mode (#11, reported by @yucongo)
