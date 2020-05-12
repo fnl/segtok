@@ -99,11 +99,12 @@ Contributors (kudos):
 
 - Mikhail Korobov (@kmike; port to Python2.7 and Travis CI integration)
 - Georg Kucsko (@gkucsko; splitting sentences at terminals followed by noise)
+- Karthikeyan Singaravelan (@tirkarthi; removing deprecation warnings, #23)
 
 History
 =======
 
-- **nightly** removed support for Python 3.3 from tox and updated README.
+- **1.5.10** removed deprecation warning (#23) as well as support for Python 3.3 from tox
 - **1.5.9** added the license as a LICENSE.txt file to this repository
 - **1.5.7** enhancement: split sentences even if the terminal is followed by invalid characters (contributed by @gkucsko)
 - **1.5.6** fixed a bug that would lead to joining lines in single-line mode (#11, reported by @yucongo)
