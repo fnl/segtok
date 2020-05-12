@@ -45,7 +45,7 @@ HYPHENS = '\u00AD\u058A\u05BE\u0F0C\u1400\u1806\u2010-\u2012\u2e17\u30A0-'
 # Lower-case abbreviations may occur capitalized or not.
 # Only abbreviations that should never occur at the end of a sentence
 # (such as "etc.")
-ABBREVIATIONS = """
+ABBREVIATIONS = r"""
 approx Capt cf Col Dr f\.?e figs? Gen e\.?g i\.?e i\.?v
 Mag med Mr Mrs Mt nat No nr p\.e phil prof rer
 sci Sgt Sr Sra Srta St univ vol vs z\.B
