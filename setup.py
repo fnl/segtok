@@ -17,7 +17,7 @@ setup(
     description='sentence segmentation and word tokenization tools',
     keywords='sentence segmenter splitter split word tokenizer token',
     license='MIT',
-    data_files = [("", ["LICENSE.txt"])],
+    license_files=('LICENSE.txt',),
     packages=['segtok'],
     install_requires=['regex'],  # handles all Unicode categories in Regular Expressions
     long_description=long_description,
