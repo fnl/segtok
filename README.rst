@@ -93,17 +93,19 @@ Legal
 
 License: `MIT <http://opensource.org/licenses/MIT>`_
 
-Copyright (c) 2014-2018, Florian Leitner. All rights reserved.
+Copyright (c) 2014-2021, Florian Leitner. All rights reserved.
 
 Contributors (kudos):
 
 - Mikhail Korobov (@kmike; port to Python2.7 and Travis CI integration)
 - Georg Kucsko (@gkucsko; splitting sentences at terminals followed by noise)
 - Karthikeyan Singaravelan (@tirkarthi; removing deprecation warnings, #23)
+- Primož Godec (@PrimozGodec; fixed LICENSE file in setup.py)
 
 History
 =======
 
+- **1.5.11** setup.py: renamed data_files with the LICENSE.txt file reference to license_files
 - **1.5.10** removed deprecation warning (#23) as well as support for Python 3.3 from tox
 - **1.5.9** added the license as a LICENSE.txt file to this repository
 - **1.5.7** enhancement: split sentences even if the terminal is followed by invalid characters (contributed by @gkucsko)
